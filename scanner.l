@@ -1,5 +1,7 @@
 %{
 #include "tokens.h"
+
+char unexpected_token_error[] = "Unexpected token: %s at line %d\n";
 %}
 
 LINE_COMMENT "//".*
@@ -140,8 +142,77 @@ LINE_COMMENT "//".*
     return TK_PR_PROTECTED;
 }
 
+"<=" {
+    return TK_OC_LE;
+}
+
+">=" {
+    return TK_OC_GE;
+}
+
+"==" {
+    return TK_OC_EQ;
+}
+
+"!=" {
+    return TK_OC_NE;
+}
+
+"&&" {
+    return TK_OC_AND;
+}
+
+"||" {
+    return TK_OC_OR;
+}
+
+"<<" {
+    return TK_OC_SL;
+}
+
+">>" {
+    return TK_OC_SR;
+}
+
+"%>%" {
+    return TK_OC_FORWARD_PIPE;
+}
+
+"%|%" {
+    return TK_OC_BASH_PIPE;
+}
+
+"," |
+";" |
+":" |
+"(" |
+")" |
+"[" |
+"]" |
+"{" |
+"}" |
+"+" |
+"-" |
+"|" |
+"?" |
+"*" |
+"/" |
+"<" |
+">" |
+"=" |
+"!" |
+"&" |
+"%" |
+"#" |
+"^" |
+"." |
+"$" {
+    return (int) yytext[0];
+}
+
 . {
-    return yytext[0];
+    printf(unexpected_token_error, yytext, yylineno);
+    return 0;
 }
 
 %%
