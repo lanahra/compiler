@@ -1,13 +1,43 @@
 %{
 #include "tokens.h"
-
-int line_number = 1;
 %}
+
+LINE_COMMENT "//".*
+
+%option yylineno
+
+%x BLOCK_COMMENT
 
 %%
 
+{LINE_COMMENT} {
+   // ignore line comment
+}
+
+"/*" {
+    BEGIN(BLOCK_COMMENT);
+}
+
+<BLOCK_COMMENT>{
+"*/" {
+    BEGIN(INITIAL);
+}
+
+[^*]+ {
+    // ignore block comment in chunks
+}
+
+"*" {
+    // ignore asterisk inside block comment
+}
+}
+
+[ \t]+ {
+    // ignore whitespace
+}
+
 \n {
-    line_number++;
+    // ignore new line
 }
 
 . {
@@ -17,5 +47,5 @@ int line_number = 1;
 %%
 
 int get_line_number() {
-    return line_number;
+    return yylineno;
 }
