@@ -6,6 +6,10 @@ char unexpected_token_error[] = "Unexpected token: %s at line %d\n";
 
 LINE_COMMENT "//".*
 ID [a-zA-Z][a-zA-Z0-9]*
+INTEGER [-+]?[0-9]+
+FLOAT {INTEGER}"."[0-9]+([eE]{INTEGER})?
+CHAR '(.|\n)?'
+STRING \"(\\.|[^\\"])*\"
 
 %option yylineno
 
@@ -209,6 +213,30 @@ ID [a-zA-Z][a-zA-Z0-9]*
 "." |
 "$" {
     return (int) yytext[0];
+}
+
+"false" {
+    return TK_LIT_FALSE;
+}
+
+"true" {
+    return TK_LIT_TRUE;
+}
+
+{INTEGER} {
+    return TK_LIT_INT;
+}
+
+{FLOAT} {
+    return TK_LIT_FLOAT;
+}
+
+{CHAR} {
+    return TK_LIT_CHAR;
+}
+
+{STRING} {
+    return TK_LIT_STRING;
 }
 
 {ID} {
