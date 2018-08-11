@@ -4,4 +4,4 @@ all:
 	gcc -Wall main.c lex.yy.o -lfl -o main
 
 clean:
-	rm main lex.yy.*
+	rm -f main lex.yy.*
