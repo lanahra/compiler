@@ -5,6 +5,7 @@ char unexpected_token_error[] = "Unexpected token: %s at line %d\n";
 %}
 
 LINE_COMMENT "//".*
+ID [a-zA-Z][a-zA-Z0-9]*
 
 %option yylineno
 
@@ -208,6 +209,10 @@ LINE_COMMENT "//".*
 "." |
 "$" {
     return (int) yytext[0];
+}
+
+{ID} {
+    return TK_IDENTIFICADOR;
 }
 
 . {
