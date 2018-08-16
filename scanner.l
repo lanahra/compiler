@@ -7,10 +7,10 @@ void count();
 %}
 
 LINE_COMMENT "//".*
-ID [a-zA-Z][a-zA-Z0-9]*
+ID [a-zA-Z][a-zA-Z0-9_]*
 INTEGER [-+]?[0-9]+
 FLOAT {INTEGER}"."[0-9]+([eE]{INTEGER})?
-CHAR '(.|\n)?'
+CHAR '.'
 STRING \"(\\.|[^\\"])*\"
 
 %option yylineno
