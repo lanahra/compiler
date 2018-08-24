@@ -19,4 +19,4 @@ $(TEST_DIR)%.o: $(TEST_DIR)%.cpp
 	g++ -c -Wall $(TEST_INCLUDE) -o $@ $<
 
 clean:
-	rm -f main run_test lex.yy.* test/*.o
+	rm -f etapa1 run_test lex.yy.* test/*.o
