@@ -4,19 +4,24 @@ TEST_LD_FLAGS = -L/usr/local/lib -lfl -lgtest -lpthread
 
 TEST_OBJ = $(addprefix $(TEST_DIR), main.o scanner.o)
 
-all: lex.yy.o
-	gcc -Wall main.c lex.yy.o -lfl -o etapa1
+all: yy
+	gcc -Wall main.c lex.yy.o parser.tab.o -lfl -o etapa2
 
-test: lex.yy.o $(TEST_OBJ)
+test: yy $(TEST_OBJ)
 	g++ -o run_test lex.yy.o $(TEST_OBJ) $(TEST_LD_FLAGS)
 	./run_test
 
-lex.yy.o:
+yy:
 	flex --header-file=lex.yy.h scanner.l
+	bison -d parser.y
 	gcc -c lex.yy.c
+	gcc -c parser.tab.c
+
+parser.tab.o:
+	gcc -c parser.tab.c
 
 $(TEST_DIR)%.o: $(TEST_DIR)%.cpp
 	g++ -c -Wall $(TEST_INCLUDE) -o $@ $<
 
 clean:
-	rm -f etapa1 run_test lex.yy.* test/*.o
+	rm -f etapa2 run_test lex.yy.* test/*.o parser.tab.*

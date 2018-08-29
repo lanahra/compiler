@@ -2,7 +2,7 @@
 
 extern "C" {
 #include "../lex.yy.h"
-#include "../tokens.h"
+#include "../parser.tab.h"
 }
 
 TEST(LexemeLineComment, ShouldNotScanLineComment) {
