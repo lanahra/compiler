@@ -57,10 +57,30 @@ unit
     ;
 
 element
-    : global_variable
+    : global_var_declaration
 
-global_variable
+global_var_declaration
+    : type_specifier declarator ';'
+    | STATIC type_specifier declarator ';'
+    ;
+
+declarator
     : ID
+    | ID array
+    ;
+
+array
+    : '[' INT_LITERAL ']'
+    ;
+
+type_specifier
+   : INT
+   | FLOAT
+   | BOOL
+   | CHAR
+   | STRING
+   | ID
+   ;
 
 %%
 
