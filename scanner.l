@@ -53,177 +53,177 @@ STRING \"(\\.|[^\\"])*\"
 
 "int" {
     count();
-    return TK_PR_INT;
+    return INT;
 }
 
 "float" {
     count();
-    return TK_PR_FLOAT;
+    return FLOAT;
 }
 
 "bool" {
     count();
-    return TK_PR_BOOL;
+    return BOOL;
 }
 
 "char" {
     count();
-    return TK_PR_CHAR;
+    return CHAR;
 }
 
 "string" {
     count();
-    return TK_PR_STRING;
+    return STRING;
 }
 
 "if" {
     count();
-    return TK_PR_IF;
+    return IF;
 }
 
 "then" {
     count();
-    return TK_PR_THEN;
+    return THEN;
 }
 
 "else" {
     count();
-    return TK_PR_ELSE;
+    return ELSE;
 }
 
 "while" {
     count();
-    return TK_PR_WHILE;
+    return WHILE;
 }
 
 "do" {
     count();
-    return TK_PR_DO;
+    return DO;
 }
 
 "input" {
     count();
-    return TK_PR_INPUT;
+    return INPUT;
 }
 
 "output" {
     count();
-    return TK_PR_OUTPUT;
+    return OUTPUT;
 }
 
 "return" {
     count();
-    return TK_PR_RETURN;
+    return RETURN;
 }
 
 "const" {
     count();
-    return TK_PR_CONST;
+    return CONST;
 }
 
 "static" {
     count();
-    return TK_PR_STATIC;
+    return STATIC;
 }
 
 "foreach" {
     count();
-    return TK_PR_FOREACH;
+    return FOREACH;
 }
 
 "for" {
     count();
-    return TK_PR_FOR;
+    return FOR;
 }
 
 "switch" {
     count();
-    return TK_PR_SWITCH;
+    return SWITCH;
 }
 
 "case" {
     count();
-    return TK_PR_CASE;
+    return CASE;
 }
 
 "break" {
     count();
-    return TK_PR_BREAK;
+    return BREAK;
 }
 
 "continue" {
     count();
-    return TK_PR_CONTINUE;
+    return CONTINUE;
 }
 
 "class" {
     count();
-    return TK_PR_CLASS;
+    return CLASS;
 }
 
 "private" {
     count();
-    return TK_PR_PRIVATE;
+    return PRIVATE;
 }
 
 "public" {
     count();
-    return TK_PR_PUBLIC;
+    return PUBLIC;
 }
 
 "protected" {
     count();
-    return TK_PR_PROTECTED;
+    return PROTECTED;
 }
 
 "<=" {
     count();
-    return TK_OC_LE;
+    return LE_OP;
 }
 
 ">=" {
     count();
-    return TK_OC_GE;
+    return GE_OP;
 }
 
 "==" {
     count();
-    return TK_OC_EQ;
+    return EQ_OP;
 }
 
 "!=" {
     count();
-    return TK_OC_NE;
+    return NE_OP;
 }
 
 "&&" {
     count();
-    return TK_OC_AND;
+    return AND_OP;
 }
 
 "||" {
     count();
-    return TK_OC_OR;
+    return OR_OP;
 }
 
 "<<" {
     count();
-    return TK_OC_SL;
+    return SL_OP;
 }
 
 ">>" {
     count();
-    return TK_OC_SR;
+    return SR_OP;
 }
 
 "%>%" {
     count();
-    return TK_OC_FORWARD_PIPE;
+    return FORWARD_PIPE;
 }
 
 "%|%" {
     count();
-    return TK_OC_BASH_PIPE;
+    return BASH_PIPE;
 }
 
 "," |
@@ -257,42 +257,42 @@ STRING \"(\\.|[^\\"])*\"
 
 "false" {
     count();
-    return TK_LIT_FALSE;
+    return FALSE;
 }
 
 "true" {
     count();
-    return TK_LIT_TRUE;
+    return TRUE;
 }
 
 {INTEGER} {
     count();
-    return TK_LIT_INT;
+    return INT_LITERAL;
 }
 
 {FLOAT} {
     count();
-    return TK_LIT_FLOAT;
+    return FLOAT_LITERAL;
 }
 
 {CHAR} {
     count();
-    return TK_LIT_CHAR;
+    return CHAR_LITERAL;
 }
 
 {STRING} {
     count();
-    return TK_LIT_STRING;
+    return STRING_LITERAL;
 }
 
 {ID} {
     count();
-    return TK_IDENTIFICADOR;
+    return ID;
 }
 
 . {
     count();
-    return TOKEN_ERRO;
+    return ERROR;
 }
 
 %%
