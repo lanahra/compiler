@@ -57,11 +57,13 @@ unit
     ;
 
 element
-    : global_var_declaration
+    : global_var_declaration ';'
+    | class_definition ';'
+    ;
 
 global_var_declaration
-    : type_specifier declarator ';'
-    | STATIC type_specifier declarator ';'
+    : type_specifier declarator
+    | STATIC type_specifier declarator
     ;
 
 declarator
@@ -74,13 +76,37 @@ array
     ;
 
 type_specifier
-   : INT
-   | FLOAT
-   | BOOL
-   | CHAR
-   | STRING
-   | ID
-   ;
+    : type
+    | ID
+    ;
+
+type
+    : INT
+    | FLOAT
+    | BOOL
+    | CHAR
+    | STRING
+    ;
+
+class_definition
+    : CLASS ID '[' field_list ']'
+    ;
+
+field_list
+    : field
+    | field_list ':' field
+    ;
+
+field
+    : type ID
+    | access_modifier type ID
+    ;
+
+access_modifier
+    : PRIVATE
+    | PUBLIC
+    | PROTECTED
+    ;
 
 %%
 
