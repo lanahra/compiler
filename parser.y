@@ -62,8 +62,8 @@ element
     ;
 
 global_var_declaration
-    : type_specifier declarator
-    | STATIC type_specifier declarator
+    : declarator type_specifier
+    | declarator STATIC type_specifier
     ;
 
 declarator

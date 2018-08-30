@@ -6,27 +6,27 @@ extern "C" {
 }
 
 TEST(SyntaxGlobalVariable, ShouldAcceptVarDeclaration) {
-    yy_scan_string("int var;");
+    yy_scan_string("var int;");
     EXPECT_EQ(0, yyparse());
 }
 
 TEST(SyntaxGlobalVariable, ShouldAcceptVarDeclarationStatic) {
-    yy_scan_string("static bool var;");
+    yy_scan_string("var static bool;");
     EXPECT_EQ(0, yyparse());
 }
 
 TEST(SyntaxGlobalVariable, ShouldAcceptVarDeclarationArray) {
-    yy_scan_string("char var[12];");
+    yy_scan_string("var[12] char;");
     EXPECT_EQ(0, yyparse());
 }
 
 TEST(SyntaxGlobalVariable, ShouldAcceptVarDeclarationStaticArray) {
-    yy_scan_string("static float var[12];");
+    yy_scan_string("var[12] static float;");
     EXPECT_EQ(0, yyparse());
 }
 
 TEST(SyntaxGlobalVariable, ShouldAcceptVarDeclarationUserType) {
-    yy_scan_string("static new_type var[12];");
+    yy_scan_string("var[12] static new_type;");
     EXPECT_EQ(0, yyparse());
 }
 
