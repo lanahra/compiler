@@ -169,18 +169,22 @@ parameter
 
 function_body
     : '{' '}'
-    | '{' command_list ';' '}'
+    | '{' command_list '}'
     ;
 
 command_list
     : command
-    | command_list ';' command
+    | command_list command
     ;
 
 command
-    : local_var_declaration
-    | variable_attribution
-    | shift_op
+    : local_var_declaration ';'
+    | variable_attribution ';'
+    | shift_op ';'
+    | return ';'
+    | BREAK ';'
+    | CONTINUE ';'
+    | case
     ;
 
 local_var_declaration
@@ -211,6 +215,14 @@ variable_attribution
 shift_op
     : ID SL_OP INT_LITERAL
     | ID SR_OP INT_LITERAL
+    ;
+
+return
+    : RETURN expression_list
+    ;
+
+case
+    : CASE INT_LITERAL ':'
     ;
 
 expression_list

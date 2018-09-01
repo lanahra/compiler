@@ -213,3 +213,37 @@ TEST(SyntaxShiftOp, AcceptsRightShiftOp) {
             "}");
     EXPECT_EQ(0, yyparse());
 }
+
+TEST(SyntaxReturn, AcceptsReturnStatement) {
+    yy_scan_string(
+            "int main() {"
+            "  return local_var;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxContinue, AcceptsContinueStatement) {
+    yy_scan_string(
+            "int main() {"
+            "  continue;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxBreak, AcceptsBreakStatement) {
+    yy_scan_string(
+            "int main() {"
+            "  break;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxCase, AcceptsCaseStatement) {
+    yy_scan_string(
+            "int main() {"
+            "  case 0:"
+            "  case 1:"
+            "  case 2:"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
