@@ -173,8 +173,15 @@ command_block
     ;
 
 command_list
+    : high_command
+    | command_list high_command
+    ;
+
+high_command
     : command
-    | command_list command
+    | case
+    | input ';'
+    | output ';'
     ;
 
 command
@@ -184,7 +191,6 @@ command
     | return ';'
     | BREAK ';'
     | CONTINUE ';'
-    | case
     | conditional_statement
     ;
 
@@ -208,9 +214,9 @@ local_var_initializer
 
 variable_attribution
     : ID ID
-    | ID '=' expression_list
-    | ID '[' expression_list ']' '=' expression_list
-    | ID '$' ID '=' expression_list
+    | ID '=' expression
+    | ID '[' expression ']' '=' expression
+    | ID '$' ID '=' expression
     ;
 
 shift_op
@@ -219,15 +225,27 @@ shift_op
     ;
 
 return
-    : RETURN expression_list
+    : RETURN expression
     ;
 
 case
     : CASE INT_LITERAL ':'
     ;
 
+input
+    : INPUT expression
+
+output
+    : OUTPUT expression_list
+    ;
+
+expression_list
+    : expression
+    | expression_list ',' expression
+    ;
+
 conditional_statement
-    : IF '(' expression_list ')' THEN command_block else_statement
+    : IF '(' expression ')' THEN command_block else_statement
     ;
 
 else_statement
@@ -235,7 +253,7 @@ else_statement
     | ELSE command_block
     ;
 
-expression_list
+expression
     : ID
     ;
 

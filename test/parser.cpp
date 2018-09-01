@@ -263,3 +263,27 @@ TEST(SyntaxConditionalStatement, AcceptsIfThenElseStatement) {
             "}");
     EXPECT_EQ(0, yyparse());
 }
+
+TEST(SyntaxInput, AcceptsInput) {
+    yy_scan_string(
+            "int main() {"
+            " input local_var;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxOutput, AcceptsOutput) {
+    yy_scan_string(
+            "int main() {"
+            " output local_var;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxOutput, AcceptsOutputMultipleExpressions) {
+    yy_scan_string(
+            "int main() {"
+            " output local_var, another_one, yet_another;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
