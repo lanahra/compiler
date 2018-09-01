@@ -107,3 +107,51 @@ TEST(SyntaxFunctionHeader, AcceptsFunctionHeaderUserType) {
     yy_scan_string("new_type new_function(other_type new_parameter) {}");
     EXPECT_EQ(0, yyparse());
 }
+
+TEST(SyntaxLocalVariable, AcceptsVarDeclaration) {
+    yy_scan_string(
+            "int main() {"
+            "  int local_var;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxLocalVariable, AcceptsStaticVarDeclaration) {
+    yy_scan_string(
+            "int main() {"
+            "  static float local_var;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxLocalVariable, AcceptsConstVarDeclaration) {
+    yy_scan_string(
+            "int main() {"
+            "  const char local_var;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxLocalVariable, AcceptsStaticConstVarDeclaration) {
+    yy_scan_string(
+            "int main() {"
+            "  static const bool local_var;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxLocalVariable, AcceptsVarInitialization) {
+    yy_scan_string(
+            "int main() {"
+            "  bool local_var <= true;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxLocalVariable, DoesNotAcceptUserTypeVarInitialization) {
+    yy_scan_string(
+            "int main() {"
+            "  new_type local_var <= 12;"
+            "}");
+    EXPECT_NE(0, yyparse());
+}

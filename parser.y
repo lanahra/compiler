@@ -74,25 +74,47 @@ global_var_declaration
     ;
 
 global_var_type_specifier
-    : type_specifier
-    | STATIC type_specifier
+    : static_modifier primitive_type_specifier
     ;
 
 global_var_class_specifier
-    : ID
-    | STATIC ID
+    : static_modifier ID
     ;
 
 array
     : '[' INT_LITERAL ']'
     ;
 
-type_specifier
+static_modifier
+    : %empty
+    | STATIC
+    ;
+
+const_modifier
+    : %empty
+    | CONST
+    ;
+
+primitive_type_specifier
     : INT
     | FLOAT
     | BOOL
     | CHAR
     | STRING
+    ;
+
+literal
+    : INT_LITERAL
+    | FLOAT_LITERAL
+    | FALSE
+    | TRUE
+    | CHAR_LITERAL
+    | STRING_LITERAL
+    ;
+
+type_specifier
+    : primitive_type_specifier
+    | ID
     ;
 
 element_specifier
@@ -110,12 +132,12 @@ field_list
     ;
 
 field
-    : type_specifier ID
-    | access_modifier type_specifier ID
+    : access_modifier primitive_type_specifier ID
     ;
 
 access_modifier
-    : PRIVATE
+    : %empty
+    | PRIVATE
     | PUBLIC
     | PROTECTED
     ;
@@ -125,8 +147,7 @@ function_definition
     ;
 
 function_header
-    : type_specifier ID parameters
-    | STATIC type_specifier ID parameters
+    : static_modifier primitive_type_specifier ID parameters
     ;
 
 parameters
@@ -140,17 +161,40 @@ parameter_list
     ;
 
 parameter
-    : parameter_type_specifier ID
-    | CONST parameter_type_specifier ID
-    ;
-
-parameter_type_specifier
-    : ID
-    | type_specifier
+    : const_modifier type_specifier ID
     ;
 
 function_body
     : '{' '}'
+    | '{' command_list ';' '}'
+    ;
+
+command_list
+    : command
+    | command_list ';' command
+    ;
+
+command
+    : local_var_declaration
+    ;
+
+local_var_declaration
+    : static_modifier const_modifier local_var_specifier
+    ;
+
+local_var_specifier
+    : primitive_type_specifier ID local_var_initialization
+    | ID ID
+    ;
+
+local_var_initialization
+    : %empty
+    | LE_OP local_var_initializer
+    ;
+
+local_var_initializer
+    : ID
+    | literal
     ;
 
 %%
