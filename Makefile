@@ -13,7 +13,7 @@ test: yy $(TEST_OBJ)
 
 yy:
 	flex --header-file=lex.yy.h scanner.l
-	bison -Wall -d parser.y
+	bison -v -Wall -d parser.y
 	gcc -c lex.yy.c
 	gcc -c parser.tab.c
 
@@ -24,4 +24,4 @@ $(TEST_DIR)%.o: $(TEST_DIR)%.cpp
 	g++ -c -Wall $(TEST_INCLUDE) -o $@ $<
 
 clean:
-	rm -f etapa2 run_test lex.yy.* test/*.o parser.tab.*
+	rm -f etapa2 run_test lex.yy.* test/*.o parser.tab.* parser.output

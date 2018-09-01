@@ -57,18 +57,30 @@ unit
     ;
 
 element
-    : global_var_declaration ';'
+    : element_definition
     | class_definition ';'
     ;
 
-global_var_declaration
-    : declarator type_specifier
-    | declarator STATIC type_specifier
+element_definition
+    : ID global_var_declaration ';'
+    | ID ID element_specifier
+    | function_definition
     ;
 
-declarator
+global_var_declaration
+    : global_var_type_specifier
+    | array global_var_type_specifier
+    | array global_var_class_specifier
+    ;
+
+global_var_type_specifier
+    : type_specifier
+    | STATIC type_specifier
+    ;
+
+global_var_class_specifier
     : ID
-    | ID array
+    | STATIC ID
     ;
 
 array
@@ -76,16 +88,16 @@ array
     ;
 
 type_specifier
-    : type
-    | ID
-    ;
-
-type
     : INT
     | FLOAT
     | BOOL
     | CHAR
     | STRING
+    ;
+
+element_specifier
+    : ';'
+    | parameters function_body
     ;
 
 class_definition
@@ -98,14 +110,47 @@ field_list
     ;
 
 field
-    : type ID
-    | access_modifier type ID
+    : type_specifier ID
+    | access_modifier type_specifier ID
     ;
 
 access_modifier
     : PRIVATE
     | PUBLIC
     | PROTECTED
+    ;
+
+function_definition
+    : function_header function_body
+    ;
+
+function_header
+    : type_specifier ID parameters
+    | STATIC type_specifier ID parameters
+    ;
+
+parameters
+    : '(' ')'
+    | '(' parameter_list ')'
+    ;
+
+parameter_list
+    : parameter
+    | parameter_list ',' parameter
+    ;
+
+parameter
+    : parameter_type_specifier ID
+    | CONST parameter_type_specifier ID
+    ;
+
+parameter_type_specifier
+    : ID
+    | type_specifier
+    ;
+
+function_body
+    : '{' '}'
     ;
 
 %%

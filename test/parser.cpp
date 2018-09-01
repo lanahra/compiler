@@ -5,32 +5,32 @@ extern "C" {
 #include "../parser.tab.h"
 }
 
-TEST(SyntaxGlobalVariable, ShouldAcceptVarDeclaration) {
+TEST(SyntaxGlobalVariable, AcceptsVarDeclaration) {
     yy_scan_string("var int;");
     EXPECT_EQ(0, yyparse());
 }
 
-TEST(SyntaxGlobalVariable, ShouldAcceptVarDeclarationStatic) {
+TEST(SyntaxGlobalVariable, AcceptsVarDeclarationStatic) {
     yy_scan_string("var static bool;");
     EXPECT_EQ(0, yyparse());
 }
 
-TEST(SyntaxGlobalVariable, ShouldAcceptVarDeclarationArray) {
+TEST(SyntaxGlobalVariable, AcceptsVarDeclarationArray) {
     yy_scan_string("var[12] char;");
     EXPECT_EQ(0, yyparse());
 }
 
-TEST(SyntaxGlobalVariable, ShouldAcceptVarDeclarationStaticArray) {
+TEST(SyntaxGlobalVariable, AcceptsVarDeclarationStaticArray) {
     yy_scan_string("var[12] static float;");
     EXPECT_EQ(0, yyparse());
 }
 
-TEST(SyntaxGlobalVariable, ShouldAcceptVarDeclarationUserType) {
+TEST(SyntaxGlobalVariable, AcceptsVarDeclarationUserType) {
     yy_scan_string("var[12] static new_type;");
     EXPECT_EQ(0, yyparse());
 }
 
-TEST(SyntaxClassDefinition, ShouldAcceptClassDefinition) {
+TEST(SyntaxClassDefinition, AcceptsClassDefinition) {
     yy_scan_string(
             "class new_class"
             "  [ string new_field"
@@ -38,12 +38,12 @@ TEST(SyntaxClassDefinition, ShouldAcceptClassDefinition) {
     EXPECT_EQ(0, yyparse());
 }
 
-TEST(SyntaxClassDefinition, ShouldNotAcceptNoFields) {
+TEST(SyntaxClassDefinition, DoesNotAcceptNoFields) {
     yy_scan_string("class new_class []");
     EXPECT_NE(0, yyparse());
 }
 
-TEST(SyntaxClassDefinition, ShouldAcceptPrivateModifier) {
+TEST(SyntaxClassDefinition, AcceptsPrivateModifier) {
     yy_scan_string(
             "class new_class"
             "  [ private string new_field"
@@ -51,7 +51,7 @@ TEST(SyntaxClassDefinition, ShouldAcceptPrivateModifier) {
     EXPECT_EQ(0, yyparse());
 }
 
-TEST(SyntaxClassDefinition, ShouldAcceptPublicModifier) {
+TEST(SyntaxClassDefinition, AcceptsPublicModifier) {
     yy_scan_string(
             "class new_class"
             "  [ public string new_field"
@@ -59,7 +59,7 @@ TEST(SyntaxClassDefinition, ShouldAcceptPublicModifier) {
     EXPECT_EQ(0, yyparse());
 }
 
-TEST(SyntaxClassDefinition, ShouldAcceptProtectedModifier) {
+TEST(SyntaxClassDefinition, AcceptsProtectedModifier) {
     yy_scan_string(
             "class new_class"
             "  [ protected string new_field"
@@ -67,12 +67,43 @@ TEST(SyntaxClassDefinition, ShouldAcceptProtectedModifier) {
     EXPECT_EQ(0, yyparse());
 }
 
-TEST(SyntaxClassDefinition, ShouldAcceptMultipleFields) {
+TEST(SyntaxClassDefinition, AcceptsMultipleFields) {
     yy_scan_string(
             "class new_class"
             "  [ protected string new_field"
             "  : private float another_field"
             "  : int another_one"
             "  ];");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxFunctionHeader, AcceptsFunctionHeaderNoParameters) {
+    yy_scan_string("int new_function() {}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxFunctionHeader, AcceptsFunctionHeaderOneParameter) {
+    yy_scan_string("float new_function(string new_parameter) {}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxFunctionHeader, AcceptsFunctionHeaderMultipleParameters) {
+    yy_scan_string(
+            "char new_function"
+            "  ( string new_parameter"
+            "  , float another_parameter"
+            "  , char another_one"
+            "  , some_type yet_another"
+            "  ) {}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxFunctionHeader, AcceptsFunctionHeaderStaticModifier) {
+    yy_scan_string("static float new_function(string new_parameter) {}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxFunctionHeader, AcceptsFunctionHeaderUserType) {
+    yy_scan_string("new_type new_function(other_type new_parameter) {}");
     EXPECT_EQ(0, yyparse());
 }
