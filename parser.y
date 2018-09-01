@@ -192,6 +192,7 @@ command
     | BREAK ';'
     | CONTINUE ';'
     | conditional_statement
+    | function_call ';'
     ;
 
 local_var_declaration
@@ -251,6 +252,21 @@ conditional_statement
 else_statement
     : %empty
     | ELSE command_block
+    ;
+
+function_call
+    : ID '(' argument_list ')'
+    ;
+
+argument_list
+    : %empty
+    | argument
+    | argument_list ',' argument
+    ;
+
+argument
+    : '.'
+    | expression
     ;
 
 expression

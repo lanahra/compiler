@@ -267,7 +267,7 @@ TEST(SyntaxConditionalStatement, AcceptsIfThenElseStatement) {
 TEST(SyntaxInput, AcceptsInput) {
     yy_scan_string(
             "int main() {"
-            " input local_var;"
+            "  input local_var;"
             "}");
     EXPECT_EQ(0, yyparse());
 }
@@ -275,7 +275,7 @@ TEST(SyntaxInput, AcceptsInput) {
 TEST(SyntaxOutput, AcceptsOutput) {
     yy_scan_string(
             "int main() {"
-            " output local_var;"
+            "  output local_var;"
             "}");
     EXPECT_EQ(0, yyparse());
 }
@@ -283,7 +283,39 @@ TEST(SyntaxOutput, AcceptsOutput) {
 TEST(SyntaxOutput, AcceptsOutputMultipleExpressions) {
     yy_scan_string(
             "int main() {"
-            " output local_var, another_one, yet_another;"
+            "  output local_var, another_one, yet_another;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxFunctionCall, AcceptsFunctionCall) {
+    yy_scan_string(
+            "int main() {"
+            "  f();"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxFunctionCall, AcceptsFunctionCallDotArgument) {
+    yy_scan_string(
+            "int main() {"
+            "  f(.);"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxFunctionCall, AcceptsFunctionCallArgument) {
+    yy_scan_string(
+            "int main() {"
+            "  f(expression);"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxFunctionCall, AcceptsFunctionCallMultipleArguments) {
+    yy_scan_string(
+            "int main() {"
+            "  f(expression, ., another_expression);"
             "}");
     EXPECT_EQ(0, yyparse());
 }
