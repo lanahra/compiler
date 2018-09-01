@@ -179,6 +179,7 @@ command_list
 
 command
     : local_var_declaration
+    | variable_attribution
     ;
 
 local_var_declaration
@@ -187,7 +188,6 @@ local_var_declaration
 
 local_var_specifier
     : primitive_type_specifier ID local_var_initialization
-    | ID ID
     ;
 
 local_var_initialization
@@ -198,6 +198,17 @@ local_var_initialization
 local_var_initializer
     : ID
     | literal
+    ;
+
+variable_attribution
+    : ID ID
+    | ID '=' expression_list
+    | ID '[' expression_list ']' '=' expression_list
+    | ID '$' ID '=' expression_list
+    ;
+
+expression_list
+    : ID
     ;
 
 %%

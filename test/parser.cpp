@@ -148,10 +148,42 @@ TEST(SyntaxLocalVariable, AcceptsVarInitialization) {
     EXPECT_EQ(0, yyparse());
 }
 
+TEST(SyntaxLocalVariable, AcceptsVarUserTypeDeclaration) {
+    yy_scan_string(
+            "int main() {"
+            "  new_type local_var;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
 TEST(SyntaxLocalVariable, DoesNotAcceptUserTypeVarInitialization) {
     yy_scan_string(
             "int main() {"
             "  new_type local_var <= 12;"
             "}");
     EXPECT_NE(0, yyparse());
+}
+
+TEST(SyntaxVariableAttribution, AcceptsVarAttribution) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxVariableAttribution, AcceptsVarArrayAttribution) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var[expression] = expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxVariableAttribution, AcceptsVarUserTypeAttribution) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var$field = expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
 }
