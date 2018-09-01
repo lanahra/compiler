@@ -26,7 +26,7 @@ TEST(SyntaxGlobalVariable, AcceptsVarDeclarationStaticArray) {
 }
 
 TEST(SyntaxGlobalVariable, AcceptsVarDeclarationUserType) {
-    yy_scan_string("var[12] static new_type;");
+    yy_scan_string("var new_type;");
     EXPECT_EQ(0, yyparse());
 }
 

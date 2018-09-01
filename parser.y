@@ -1,7 +1,10 @@
 %{
 #include <stdio.h>
+#include "lex.yy.h"
 int yylex();
 void yyerror(char const *s);
+extern int get_line_number();
+extern int get_column_number();
 %}
 
 %token INT
@@ -200,5 +203,6 @@ local_var_initializer
 %%
 
 void yyerror(char const *s) {
-   fprintf(stderr, "%s\n", s);
+    char error[] = "Unexpected token: %s at line %d column %d\n";
+    fprintf(stderr, error, yytext, get_line_number(), get_column_number());
 }

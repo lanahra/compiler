@@ -291,7 +291,6 @@ STRING \"(\\.|[^\\"])*\"
 }
 
 . {
-    count();
     return ERROR;
 }
 
@@ -311,4 +310,8 @@ void count() {
 
 int get_line_number() {
     return yylineno;
+}
+
+int get_column_number() {
+    return column;
 }
