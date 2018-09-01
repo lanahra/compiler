@@ -180,6 +180,7 @@ command_list
 command
     : local_var_declaration
     | variable_attribution
+    | shift_op
     ;
 
 local_var_declaration
@@ -205,6 +206,11 @@ variable_attribution
     | ID '=' expression_list
     | ID '[' expression_list ']' '=' expression_list
     | ID '$' ID '=' expression_list
+    ;
+
+shift_op
+    : ID SL_OP INT_LITERAL
+    | ID SR_OP INT_LITERAL
     ;
 
 expression_list

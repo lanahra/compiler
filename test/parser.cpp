@@ -108,6 +108,16 @@ TEST(SyntaxFunctionHeader, AcceptsFunctionHeaderUserType) {
     EXPECT_EQ(0, yyparse());
 }
 
+TEST(SyntaxFunctionHeader, AcceptsFunctionBodyMultipleCommands) {
+    yy_scan_string(
+            "int main() {"
+            "  int local_var;"
+            "  float another_local_var;"
+            "  char yet_another_local_var;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
 TEST(SyntaxLocalVariable, AcceptsVarDeclaration) {
     yy_scan_string(
             "int main() {"
@@ -184,6 +194,22 @@ TEST(SyntaxVariableAttribution, AcceptsVarUserTypeAttribution) {
     yy_scan_string(
             "int main() {"
             "  local_var$field = expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxShiftOp, AcceptsLeftShiftOp) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var << 8;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxShiftOp, AcceptsRightShiftOp) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var >> 8;"
             "}");
     EXPECT_EQ(0, yyparse());
 }
