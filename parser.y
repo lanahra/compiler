@@ -169,12 +169,12 @@ parameter
 
 command_block
     : '{' '}'
-    | '{' command_list '}'
+    | '{' high_command_list '}'
     ;
 
-command_list
+high_command_list
     : high_command
-    | command_list high_command
+    | high_command_list high_command
     ;
 
 high_command
@@ -193,6 +193,7 @@ command
     | CONTINUE ';'
     | conditional_statement
     | function_call ';'
+    | foreach
     ;
 
 local_var_declaration
@@ -240,11 +241,6 @@ output
     : OUTPUT expression_list
     ;
 
-expression_list
-    : expression
-    | expression_list ',' expression
-    ;
-
 conditional_statement
     : IF '(' expression ')' THEN command_block else_statement
     ;
@@ -267,6 +263,15 @@ argument_list
 argument
     : '.'
     | expression
+    ;
+
+foreach
+    : FOREACH '(' ID ':' expression_list ')' command_block
+    ;
+
+expression_list
+    : expression
+    | expression_list ',' expression
     ;
 
 expression

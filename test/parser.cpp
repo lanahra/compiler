@@ -319,3 +319,11 @@ TEST(SyntaxFunctionCall, AcceptsFunctionCallMultipleArguments) {
             "}");
     EXPECT_EQ(0, yyparse());
 }
+
+TEST(SyntaxForeach, AcceptsForeach) {
+    yy_scan_string(
+            "int main() {"
+            "  foreach (id : expression, another_expression) {}"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
