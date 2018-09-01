@@ -362,58 +362,34 @@ TEST(LexemeIntLiteral, ScansInteger) {
     EXPECT_STREQ("102", yytext);
 }
 
-TEST(LexemeIntLiteral, ScansIntegerPlusSign) {
-    yy_scan_string("+102");
-    EXPECT_EQ(INT_LITERAL, yylex());
-    EXPECT_STREQ("+102", yytext);
-}
-
-TEST(LexemeIntLiteral, ScansIntegerMinusSign) {
-    yy_scan_string("-102");
-    EXPECT_EQ(INT_LITERAL, yylex());
-    EXPECT_STREQ("-102", yytext);
-}
-
 TEST(LexemeFloatLiteral, ScansFloat) {
     yy_scan_string("1.0");
     EXPECT_EQ(FLOAT_LITERAL, yylex());
     EXPECT_STREQ("1.0", yytext);
 }
 
-TEST(LexemeFloatLiteral, ScansFloatPlusSign) {
-    yy_scan_string("+1.0");
-    EXPECT_EQ(FLOAT_LITERAL, yylex());
-    EXPECT_STREQ("+1.0", yytext);
-}
-
-TEST(LexemeFloatLiteral, ScansFloatMinusSign) {
-    yy_scan_string("-1.0");
-    EXPECT_EQ(FLOAT_LITERAL, yylex());
-    EXPECT_STREQ("-1.0", yytext);
-}
-
 TEST(LexemeFloatLiteral, ScansFloatExpoent) {
-    yy_scan_string("-1.0e10");
+    yy_scan_string("1.0e10");
     EXPECT_EQ(FLOAT_LITERAL, yylex());
-    EXPECT_STREQ("-1.0e10", yytext);
+    EXPECT_STREQ("1.0e10", yytext);
 }
 
 TEST(LexemeFloatLiteral, ScansFloatExpoentPlusSign) {
-    yy_scan_string("-1.0e+10");
+    yy_scan_string("1.0e+10");
     EXPECT_EQ(FLOAT_LITERAL, yylex());
-    EXPECT_STREQ("-1.0e+10", yytext);
+    EXPECT_STREQ("1.0e+10", yytext);
 }
 
 TEST(LexemeFloatLiteral, ScansFloatExpoentMinusSign) {
-    yy_scan_string("-1.0e-10");
+    yy_scan_string("1.0e-10");
     EXPECT_EQ(FLOAT_LITERAL, yylex());
-    EXPECT_STREQ("-1.0e-10", yytext);
+    EXPECT_STREQ("1.0e-10", yytext);
 }
 
 TEST(LexemeFloatLiteral, ScansFloatExpoentUpperCase) {
-    yy_scan_string("-1.0E-10");
+    yy_scan_string("1.0E-10");
     EXPECT_EQ(FLOAT_LITERAL, yylex());
-    EXPECT_STREQ("-1.0E-10", yytext);
+    EXPECT_STREQ("1.0E-10", yytext);
 }
 
 TEST(LexemeFloatLiteral, DoesNotScanFloatWithoutIntegerPart) {

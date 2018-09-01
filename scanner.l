@@ -8,8 +8,8 @@ void count();
 
 LINE_COMMENT "//".*
 ID [a-zA-Z_][a-zA-Z_0-9]*
-INTEGER [-+]?[0-9]+
-FLOAT {INTEGER}"."[0-9]+([eE]{INTEGER})?
+INTEGER [0-9]+
+FLOAT {INTEGER}"."[0-9]+([eE][-+]?{INTEGER})?
 CHAR '.'
 STRING \"(\\.|[^\\"])*\"
 
