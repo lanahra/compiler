@@ -122,7 +122,7 @@ type_specifier
 
 element_specifier
     : ';'
-    | parameters function_body
+    | parameters command_block
     ;
 
 class_definition
@@ -146,7 +146,7 @@ access_modifier
     ;
 
 function_definition
-    : function_header function_body
+    : function_header command_block
     ;
 
 function_header
@@ -167,7 +167,7 @@ parameter
     : const_modifier type_specifier ID
     ;
 
-function_body
+command_block
     : '{' '}'
     | '{' command_list '}'
     ;
@@ -185,6 +185,7 @@ command
     | BREAK ';'
     | CONTINUE ';'
     | case
+    | conditional_statement
     ;
 
 local_var_declaration
@@ -223,6 +224,15 @@ return
 
 case
     : CASE INT_LITERAL ':'
+    ;
+
+conditional_statement
+    : IF '(' expression_list ')' THEN command_block else_statement
+    ;
+
+else_statement
+    : %empty
+    | ELSE command_block
     ;
 
 expression_list

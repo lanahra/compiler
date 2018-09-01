@@ -247,3 +247,19 @@ TEST(SyntaxCase, AcceptsCaseStatement) {
             "}");
     EXPECT_EQ(0, yyparse());
 }
+
+TEST(SyntaxConditionalStatement, AcceptsIfThenStatement) {
+    yy_scan_string(
+            "int main() {"
+            "  if (expressions) then {}"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxConditionalStatement, AcceptsIfThenElseStatement) {
+    yy_scan_string(
+            "int main() {"
+            "  if (expressions) then {} else {}"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
