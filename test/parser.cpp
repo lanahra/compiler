@@ -320,6 +320,30 @@ TEST(SyntaxFunctionCall, AcceptsFunctionCallMultipleArguments) {
     EXPECT_EQ(0, yyparse());
 }
 
+TEST(SyntaxFunctionCall, AcceptsFunctionForwardPipe) {
+    yy_scan_string(
+            "int main() {"
+            "  f(expression) \%>\% g(.);"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxFunctionCall, AcceptsFunctionBashPipe) {
+    yy_scan_string(
+            "int main() {"
+            "  f(expression) \%|\% g(.);"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxFunctionCall, AcceptsFunctionMultiplePipes) {
+    yy_scan_string(
+            "int main() {"
+            "  f(x) \%>\% g(.) \%|\% h(., z);"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
 TEST(SyntaxForeach, AcceptsForeach) {
     yy_scan_string(
             "int main() {"

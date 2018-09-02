@@ -254,7 +254,17 @@ else_statement
     ;
 
 function_call
+    : function
+    | function_call pipe function
+    ;
+
+function
     : ID '(' argument_list ')'
+    ;
+
+pipe
+    : FORWARD_PIPE
+    | BASH_PIPE
     ;
 
 argument_list
