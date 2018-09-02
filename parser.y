@@ -299,7 +299,44 @@ expression_list
     ;
 
 expression
+    : unary_expression
+    | expression operator unary_expression
+    ;
+
+unary_expression
+    : operand
+    | unary_operator operand
+    ;
+
+unary_operator
+    : '-'
+    | '!'
+    | '*'
+    | '&'
+    ;
+
+operator
+    : '+'
+    | '-'
+    | '*'
+    | '/'
+    | '%'
+    | '|'
+    | '<'
+    | '>'
+    | '^'
+    | EQ_OP
+    | NE_OP
+    | GE_OP
+    | LE_OP
+    | AND_OP
+    | OR_OP
+    ;
+
+operand
     : ID
+    | literal
+    | function_call
     ;
 
 %%
