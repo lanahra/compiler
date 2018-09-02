@@ -196,6 +196,7 @@ command
     | foreach
     | while
     | do_while ';'
+    | switch
     ;
 
 local_var_declaration
@@ -277,6 +278,10 @@ while
 
 do_while
     : DO command_block WHILE '(' expression ')'
+
+switch
+    : SWITCH '(' expression ')' command_block
+    ;
 
 expression_list
     : expression

@@ -343,3 +343,11 @@ TEST(SyntaxDoWhile, AcceptsDoWhile) {
             "}");
     EXPECT_EQ(0, yyparse());
 }
+
+TEST(SyntaxSwitch, AcceptsSwitch) {
+    yy_scan_string(
+            "int main() {"
+            "  switch (expression) {}"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
