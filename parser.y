@@ -194,6 +194,8 @@ command
     | conditional_statement
     | function_call ';'
     | foreach
+    | while
+    | do_while ';'
     ;
 
 local_var_declaration
@@ -268,6 +270,13 @@ argument
 foreach
     : FOREACH '(' ID ':' expression_list ')' command_block
     ;
+
+while
+    : WHILE '(' expression ')' DO command_block
+    ;
+
+do_while
+    : DO command_block WHILE '(' expression ')'
 
 expression_list
     : expression

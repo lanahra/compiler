@@ -327,3 +327,19 @@ TEST(SyntaxForeach, AcceptsForeach) {
             "}");
     EXPECT_EQ(0, yyparse());
 }
+
+TEST(SyntaxWhile, AcceptsWhile) {
+    yy_scan_string(
+            "int main() {"
+            "  while (expression) do {}"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxDoWhile, AcceptsDoWhile) {
+    yy_scan_string(
+            "int main() {"
+            "  do {} while (expression);"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
