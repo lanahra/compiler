@@ -306,6 +306,7 @@ expression
 unary_expression
     : operand
     | unary_operator operand
+    | '(' expression ')'
     ;
 
 unary_operator
@@ -321,10 +322,11 @@ operator
     | '*'
     | '/'
     | '%'
+    | '^'
     | '|'
+    | '&'
     | '<'
     | '>'
-    | '^'
     | EQ_OP
     | NE_OP
     | GE_OP

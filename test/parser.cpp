@@ -375,3 +375,235 @@ TEST(SyntaxSwitch, AcceptsSwitch) {
             "}");
     EXPECT_EQ(0, yyparse());
 }
+
+TEST(SyntaxOperand, AcceptsId) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = id;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxOperand, AcceptsLiteralInt) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = 12;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxOperand, AcceptsLiteralFloat) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = 12.23e-10;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxOperand, AcceptsFalse) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = false;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxOperand, AcceptsTrue) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = true;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxOperand, AcceptsLiteralChar) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = 'a';"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxOperand, AcceptsLiteralString) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = \"a string\";"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxOperand, AcceptsFunctionCall) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = f();"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxOperand, AcceptsPipeFunctionCall) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = f() \%>\% g(.) %|% h(., z);"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxUnaryOperator, AcceptsMinusOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = -expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxUnaryOperator, AcceptsNegationOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = !expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxUnaryOperator, AcceptsPointerOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = *expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxUnaryOperator, AcceptsAddressOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = &expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxBinaryOperator, AcceptsSumOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression + expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxBinaryOperator, AcceptsSubtractionOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression - expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxBinaryOperator, AcceptsMultiplicationOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression * expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxBinaryOperator, AcceptsDivisionOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression / expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxBinaryOperator, AcceptsModulusOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression \% expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxBinaryOperator, AcceptsExponentiationOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression ^ expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxBinaryOperator, AcceptsBitwiseOrOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression | expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxBinaryOperator, AcceptsBitwiseAndOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression & expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxBinaryOperator, AcceptsLessThanOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression < expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxBinaryOperator, AcceptsGreaterThanOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression > expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxBinaryOperator, AcceptsEqualOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression == expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxBinaryOperator, AcceptsNotEqualOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression != expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxBinaryOperator, AcceptsGreaterOrEqualThanOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression >= expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxBinaryOperator, AcceptsLessOrEqualThanOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression <= expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxBinaryOperator, AcceptsAndOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression && expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxBinaryOperator, AcceptsOrOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression || expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
