@@ -178,24 +178,29 @@ high_command_list
     ;
 
 high_command
-    : command
-    | case
-    | input ';'
+    : command ';'
     | output ';'
+    | case
     ;
 
+command_list
+    : command
+    | command_list ',' command
+
 command
-    : local_var_declaration ';'
-    | variable_attribution ';'
-    | shift_op ';'
-    | return ';'
-    | BREAK ';'
-    | CONTINUE ';'
+    : local_var_declaration
+    | variable_attribution
+    | shift
+    | return
+    | BREAK
+    | CONTINUE
+    | input
     | conditional_statement
-    | function_call ';'
+    | function_call
     | foreach
+    | for
     | while
-    | do_while ';'
+    | do_while
     | switch
     ;
 
@@ -219,14 +224,19 @@ local_var_initializer
 
 variable_attribution
     : ID ID
-    | ID '=' expression
-    | ID '[' expression ']' '=' expression
-    | ID '$' ID '=' expression
+    | variable '=' expression
     ;
 
-shift_op
-    : ID SL_OP INT_LITERAL
-    | ID SR_OP INT_LITERAL
+variable
+    : ID
+    | ID '$' ID
+    | ID '[' expression ']'
+    | ID '[' expression ']' '$' ID
+    ;
+
+shift
+    : variable SL_OP expression
+    | variable SR_OP expression
     ;
 
 return
@@ -282,6 +292,10 @@ foreach
     : FOREACH '(' ID ':' expression_list ')' command_block
     ;
 
+for
+    : FOR '(' command_list ':' expression ':' command_list ')' command_block
+    ;
+
 while
     : WHILE '(' expression ')' DO command_block
     ;
@@ -306,11 +320,11 @@ expression
 unary_expression
     : operand
     | unary_operator operand
-    | '(' expression ')'
     ;
 
 unary_operator
-    : '-'
+    : '+'
+    | '-'
     | '!'
     | '*'
     | '&'
@@ -336,9 +350,10 @@ operator
     ;
 
 operand
-    : ID
+    : variable
     | literal
     | function_call
+    | '(' expression ')'
     ;
 
 %%

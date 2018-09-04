@@ -198,10 +198,42 @@ TEST(SyntaxVariableAttribution, AcceptsVarUserTypeAttribution) {
     EXPECT_EQ(0, yyparse());
 }
 
+TEST(SyntaxVariableAttribution, AcceptsVarUserTypeArrayAttribution) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var[expression]$field = expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
 TEST(SyntaxShiftOp, AcceptsLeftShiftOp) {
     yy_scan_string(
             "int main() {"
-            "  local_var << 8;"
+            "  local_var << expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxShiftOp, AcceptsLeftShiftOpArray) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var[expression] << expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxShiftOp, AcceptsLeftShiftOpUserType) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var$field << expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxShiftOp, AcceptsLeftShiftOpArrayUserType) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var[expression]$field << expression;"
             "}");
     EXPECT_EQ(0, yyparse());
 }
@@ -209,7 +241,31 @@ TEST(SyntaxShiftOp, AcceptsLeftShiftOp) {
 TEST(SyntaxShiftOp, AcceptsRightShiftOp) {
     yy_scan_string(
             "int main() {"
-            "  local_var >> 8;"
+            "  local_var >> expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxShiftOp, AcceptsRightShiftOpArray) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var[expression] >> expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxShiftOp, AcceptsRightShiftOpUserType) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var$field >> expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxShiftOp, AcceptsRightShiftOpArrayUserType) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var[expression]$field >> expression;"
             "}");
     EXPECT_EQ(0, yyparse());
 }
@@ -251,7 +307,7 @@ TEST(SyntaxCase, AcceptsCaseStatement) {
 TEST(SyntaxConditionalStatement, AcceptsIfThenStatement) {
     yy_scan_string(
             "int main() {"
-            "  if (expressions) then {}"
+            "  if (expressions) then {};"
             "}");
     EXPECT_EQ(0, yyparse());
 }
@@ -259,7 +315,7 @@ TEST(SyntaxConditionalStatement, AcceptsIfThenStatement) {
 TEST(SyntaxConditionalStatement, AcceptsIfThenElseStatement) {
     yy_scan_string(
             "int main() {"
-            "  if (expressions) then {} else {}"
+            "  if (expressions) then {} else {};"
             "}");
     EXPECT_EQ(0, yyparse());
 }
@@ -347,7 +403,15 @@ TEST(SyntaxFunctionCall, AcceptsFunctionMultiplePipes) {
 TEST(SyntaxForeach, AcceptsForeach) {
     yy_scan_string(
             "int main() {"
-            "  foreach (id : expression, another_expression) {}"
+            "  foreach (id : expression, another_expression) {};"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxFor, AcceptsFor) {
+    yy_scan_string(
+            "int main() {"
+            "  for (i = 0, j = 0 : expression : i = i + 1, j = j + 1) {};"
             "}");
     EXPECT_EQ(0, yyparse());
 }
@@ -355,7 +419,7 @@ TEST(SyntaxForeach, AcceptsForeach) {
 TEST(SyntaxWhile, AcceptsWhile) {
     yy_scan_string(
             "int main() {"
-            "  while (expression) do {}"
+            "  while (expression) do {};"
             "}");
     EXPECT_EQ(0, yyparse());
 }
@@ -371,7 +435,7 @@ TEST(SyntaxDoWhile, AcceptsDoWhile) {
 TEST(SyntaxSwitch, AcceptsSwitch) {
     yy_scan_string(
             "int main() {"
-            "  switch (expression) {}"
+            "  switch (expression) {};"
             "}");
     EXPECT_EQ(0, yyparse());
 }
@@ -380,6 +444,30 @@ TEST(SyntaxOperand, AcceptsId) {
     yy_scan_string(
             "int main() {"
             "  local_var = id;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxOperand, AcceptsIdArray) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = id[expression];"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxOperand, AcceptsIdUserType) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = id$field;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxOperand, AcceptsIdUserTypeArray) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = id[expression]$field;"
             "}");
     EXPECT_EQ(0, yyparse());
 }
@@ -443,7 +531,7 @@ TEST(SyntaxOperand, AcceptsFunctionCall) {
 TEST(SyntaxOperand, AcceptsPipeFunctionCall) {
     yy_scan_string(
             "int main() {"
-            "  local_var = f() \%>\% g(.) %|% h(., z);"
+            "  local_var = f() \%>\% g(.) \%|\% h(., z);"
             "}");
     EXPECT_EQ(0, yyparse());
 }
@@ -604,6 +692,22 @@ TEST(SyntaxBinaryOperator, AcceptsOrOperator) {
     yy_scan_string(
             "int main() {"
             "  local_var = expression || expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxExpression, AcceptsSingleExpression) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = (expression);"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxExpression, AcceptsCompoundExpression) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = (expression + -(expression));"
             "}");
     EXPECT_EQ(0, yyparse());
 }
