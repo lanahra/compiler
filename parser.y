@@ -202,6 +202,7 @@ command
     | while
     | do_while
     | switch
+    | command_block
     ;
 
 local_var_declaration
@@ -313,13 +314,74 @@ expression_list
     ;
 
 expression
-    : unary_expression
-    | expression operator unary_expression
+    : pipe_exp
     ;
 
-unary_expression
+pipe_exp
+    : ternary_exp
+    | pipe_exp FORWARD_PIPE ternary_exp
+    | pipe_exp BASH_PIPE ternary_exp
+    ;
+
+ternary_exp
+    : logical_or_exp
+    | logical_or_exp '?' expression ':' ternary_exp
+
+logical_or_exp
+    : logical_and_exp
+    | logical_or_exp OR_OP logical_and_exp
+    ;
+
+logical_and_exp
+    : bitwise_or_exp
+    | logical_and_exp AND_OP bitwise_or_exp
+    ;
+
+bitwise_or_exp
+    : bitwise_and_exp
+    | bitwise_or_exp '|' bitwise_and_exp
+    ;
+
+bitwise_and_exp
+    : equality_exp
+    | bitwise_and_exp '&' equality_exp
+    ;
+
+equality_exp
+    : relational_exp
+    | equality_exp EQ_OP relational_exp
+    | equality_exp NE_OP relational_exp
+    ;
+
+relational_exp
+    : additive_exp
+    | relational_exp '<' additive_exp
+    | relational_exp '>' additive_exp
+    | relational_exp LE_OP additive_exp
+    | relational_exp GE_OP additive_exp
+    ;
+
+additive_exp
+    : multiplicative_exp
+    | additive_exp '+' multiplicative_exp
+    | additive_exp '-' multiplicative_exp
+    ;
+
+multiplicative_exp
+    : exponentiation_exp
+    | multiplicative_exp '*' exponentiation_exp
+    | multiplicative_exp '/' exponentiation_exp
+    | multiplicative_exp '%' exponentiation_exp
+    ;
+
+exponentiation_exp
+    : unary_exp
+    | exponentiation_exp '^' unary_exp
+    ;
+
+unary_exp
     : operand
-    | unary_operator operand
+    | unary_operator unary_exp
     ;
 
 unary_operator
@@ -328,31 +390,14 @@ unary_operator
     | '!'
     | '*'
     | '&'
-    ;
-
-operator
-    : '+'
-    | '-'
-    | '*'
-    | '/'
-    | '%'
-    | '^'
-    | '|'
-    | '&'
-    | '<'
-    | '>'
-    | EQ_OP
-    | NE_OP
-    | GE_OP
-    | LE_OP
-    | AND_OP
-    | OR_OP
+    | '?'
+    | '#'
     ;
 
 operand
     : variable
     | literal
-    | function_call
+    | function
     | '(' expression ')'
     ;
 

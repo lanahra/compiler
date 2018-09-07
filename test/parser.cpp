@@ -440,6 +440,15 @@ TEST(SyntaxSwitch, AcceptsSwitch) {
     EXPECT_EQ(0, yyparse());
 }
 
+TEST(SyntaxCommandBlock, AcceptsCommandBlock) {
+    yy_scan_string(
+            "int main() {"
+            "  {};"
+            "  {{};};"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
 TEST(SyntaxOperand, AcceptsId) {
     yy_scan_string(
             "int main() {"
@@ -568,6 +577,22 @@ TEST(SyntaxUnaryOperator, AcceptsAddressOperator) {
     EXPECT_EQ(0, yyparse());
 }
 
+TEST(SyntaxUnaryOperator, AcceptsEvalOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = ?expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxUnaryOperator, AcceptsHashOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = #expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
 TEST(SyntaxBinaryOperator, AcceptsSumOperator) {
     yy_scan_string(
             "int main() {"
@@ -692,6 +717,14 @@ TEST(SyntaxBinaryOperator, AcceptsOrOperator) {
     yy_scan_string(
             "int main() {"
             "  local_var = expression || expression;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+}
+
+TEST(SyntaxTernaryOperator, AcceptsTernaryOperator) {
+    yy_scan_string(
+            "int main() {"
+            "  local_var = expression ? expression : expression;"
             "}");
     EXPECT_EQ(0, yyparse());
 }
