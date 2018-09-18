@@ -5,6 +5,11 @@ extern "C" {
 #include "../parser.tab.h"
 }
 
+TEST(SyntaxEmptyProgram, AcceptsEmptyProgram) {
+    yy_scan_string("//this is an empty program");
+    EXPECT_EQ(0, yyparse());
+}
+
 TEST(SyntaxGlobalVariable, AcceptsVarDeclaration) {
     yy_scan_string("var int;");
     EXPECT_EQ(0, yyparse());

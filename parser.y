@@ -51,8 +51,13 @@ extern int get_column_number();
 %token ID
 %token ERROR
 
-%start unit
+%start program
 %%
+
+program
+    : %empty
+    | unit
+    ;
 
 unit
     : element
