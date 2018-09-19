@@ -1,27 +1,44 @@
-TEST_DIR = test/
+SOURCE_DIR = src
+INLCUDE_DIR = include
+TEST_DIR = test
+OBJ_DIR = obj
+
 TEST_INCLUDE = -I/usr/local/include
 TEST_LD_FLAGS = -L/usr/local/lib -lfl -lgtest -lpthread
 
-TEST_OBJ = $(addprefix $(TEST_DIR), main.o scanner.o parser.o)
+TESTS := $(wildcard $(TEST_DIR)/*.cpp)
+TEST_OBJ := $(TESTS:$(TEST_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-all: yy
-	gcc -Wall main.c lex.yy.o parser.tab.o -lfl -o etapa2
+SOURCES := $(wildcard $(SRC_DIR)/*.c)
+SOURCES += $(addprefix $(SRC_DIR)/, lex.yy.c parser.tab.c)
+OBJECTS := $(SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-test: yy $(TEST_OBJ)
-	g++ -o run_test lex.yy.o parser.tab.o $(TEST_OBJ) $(TEST_LD_FLAGS)
+TARGET = etapa2
+
+.PHONY: all test yy dir clean
+
+all: dir $(TARGET)
+
+$(TARGET): yy $(OBJECTS)
+	gcc -Wall main.c $(OBJECTS) -lfl -o $@
+
+
+test: dir yy $(OBJECTS) $(TEST_OBJ)
+	g++ -o run_test $(OBJECTS) $(TEST_OBJ) $(TEST_LD_FLAGS)
 	./run_test
 
 yy:
-	flex --header-file=lex.yy.h scanner.l
-	bison -v -Wall -d parser.y
-	gcc -c lex.yy.c
-	gcc -c parser.tab.c
+	flex -o src/lex.yy.c --header-file=include/lex.yy.h scanner.l
+	bison -Wall -o src/parser.tab.c --defines=include/parser.tab.h parser.y
 
-parser.tab.o:
-	gcc -c parser.tab.c
+$(OBJECTS): $(OBJ_DIR)/%.o : $(SOURCE_DIR)/%.c
+	gcc -Wall -c $< -o $@
 
-$(TEST_DIR)%.o: $(TEST_DIR)%.cpp
-	g++ -c -Wall $(TEST_INCLUDE) -o $@ $<
+$(TEST_OBJ): $(OBJ_DIR)/%.o: $(TEST_DIR)/%.cpp
+	g++ -Wall $(TEST_INCLUDE) -c $< -o $@
+
+dir:
+	mkdir -p obj include src
 
 clean:
-	rm -f etapa2 run_test lex.yy.* test/*.o parser.tab.* parser.output
+	rm -fr etapa2 run_test */lex.yy.* */parser.tab.* obj

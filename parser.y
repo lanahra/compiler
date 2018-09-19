@@ -1,6 +1,6 @@
 %{
 #include <stdio.h>
-#include "lex.yy.h"
+#include "../include/lex.yy.h"
 int yylex();
 void yyerror(char const *s);
 extern int get_line_number();

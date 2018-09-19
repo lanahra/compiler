@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
 extern "C" {
-#include "../lex.yy.h"
-#include "../parser.tab.h"
+#include "../include/lex.yy.h"
+#include "../include/parser.tab.h"
 }
 
 TEST(LexemeLineComment, DoesNotScanLineComment) {

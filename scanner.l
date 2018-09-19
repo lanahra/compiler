@@ -1,5 +1,5 @@
 %{
-#include "parser.tab.h"
+#include "../include/parser.tab.h"
 
 int column = 1;
 
