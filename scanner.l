@@ -14,6 +14,8 @@ CHAR '.'
 STRING \"(\\.|[^\\"])*\"
 
 %option yylineno
+%option noinput
+%option nounput
 
 %x BLOCK_COMMENT
 
