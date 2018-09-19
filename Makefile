@@ -22,10 +22,9 @@ all: dir $(TARGET)
 $(TARGET): yy $(OBJECTS)
 	gcc -Wall main.c $(OBJECTS) -lfl -o $@
 
-
 test: dir yy $(OBJECTS) $(TEST_OBJ)
 	g++ -o run_test $(OBJECTS) $(TEST_OBJ) $(TEST_LD_FLAGS)
-	./run_test
+	valgrind -v --leak-check=full ./run_test
 
 yy:
 	flex -o src/lex.yy.c --header-file=include/lex.yy.h scanner.l
