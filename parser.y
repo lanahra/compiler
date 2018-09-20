@@ -21,10 +21,12 @@ union value {
 }
 
 %union {
-    int line;
-    int column;
-    enum yytokentype type;
-    union value val;
+    struct token {
+        int line;
+        int column;
+        enum yytokentype type;
+        union value val;
+    } token;
 }
 
 %token INT
@@ -67,8 +69,8 @@ union value {
 %token FALSE
 %token TRUE
 %token CHAR_LITERAL
-%token <val.string_v> STRING_LITERAL
-%token <val.string_v> ID
+%token <token.val.string_v> STRING_LITERAL
+%token <token.val.string_v> ID
 %token ERROR
 
 %start program

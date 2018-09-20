@@ -520,7 +520,7 @@ TEST(LexemeStringLiteral, ScansString) {
     yy_scan_string("\"a\"");
     EXPECT_EQ(STRING_LITERAL, yylex());
     EXPECT_STREQ("\"a\"", yytext);
-    free(yylval.val.string_v);
+    free(yylval.token.val.string_v);
     yylex_destroy();
 }
 
@@ -528,7 +528,7 @@ TEST(LexemeStringLiteral, ScansEmptyString) {
     yy_scan_string("\"\"");
     EXPECT_EQ(STRING_LITERAL, yylex());
     EXPECT_STREQ("\"\"", yytext);
-    free(yylval.val.string_v);
+    free(yylval.token.val.string_v);
     yylex_destroy();
 }
 
@@ -536,7 +536,7 @@ TEST(LexemeStringLiteral, ScansEscapedCharInString) {
     yy_scan_string("\"\\n\"");
     EXPECT_EQ(STRING_LITERAL, yylex());
     EXPECT_STREQ("\"\\n\"", yytext);
-    free(yylval.val.string_v);
+    free(yylval.token.val.string_v);
     yylex_destroy();
 }
 
@@ -544,7 +544,7 @@ TEST(LexemeStringLiteral, ScansEscapedQuoteInString) {
     yy_scan_string("\"\\\"\"");
     EXPECT_EQ(STRING_LITERAL, yylex());
     EXPECT_STREQ("\"\\\"\"", yytext);
-    free(yylval.val.string_v);
+    free(yylval.token.val.string_v);
     yylex_destroy();
 }
 
@@ -559,7 +559,7 @@ TEST(LexemeIdentifier, ScansIdentifier) {
     yy_scan_string("abc");
     EXPECT_EQ(ID, yylex());
     EXPECT_STREQ("abc", yytext);
-    free(yylval.val.string_v);
+    free(yylval.token.val.string_v);
     yylex_destroy();
 }
 
@@ -567,7 +567,7 @@ TEST(LexemeIdentifier, ScansIdentifierWithDigit) {
     yy_scan_string("abc132");
     EXPECT_EQ(ID, yylex());
     EXPECT_STREQ("abc132", yytext);
-    free(yylval.val.string_v);
+    free(yylval.token.val.string_v);
     yylex_destroy();
 }
 
@@ -575,7 +575,7 @@ TEST(LexemeIdentifier, ScansIdentifierWithUnderscore) {
     yy_scan_string("_abc_132_");
     EXPECT_EQ(ID, yylex());
     EXPECT_STREQ("_abc_132_", yytext);
-    free(yylval.val.string_v);
+    free(yylval.token.val.string_v);
     yylex_destroy();
 }
 
@@ -583,7 +583,7 @@ TEST(LexemeIdentifier, DoesNotScanReservedKeyword) {
     yy_scan_string("intfloat");
     EXPECT_EQ(ID, yylex());
     EXPECT_STREQ("intfloat", yytext);
-    free(yylval.val.string_v);
+    free(yylval.token.val.string_v);
     yylex_destroy();
 }
 
@@ -604,49 +604,49 @@ TEST(LexemeError, ScansErrorToken) {
 TEST(LexemeTokenValue, AssignsIntegerTokenValue) {
     yy_scan_string("142");
     EXPECT_THAT(yylex(), Eq(INT_LITERAL));
-    EXPECT_THAT(yylval.val.int_v, Eq(142));
+    EXPECT_THAT(yylval.token.val.int_v, Eq(142));
     yylex_destroy();
 }
 
 TEST(LexemeTokenValue, AssignsFloatTokenValue) {
     yy_scan_string("4.5");
     EXPECT_THAT(yylex(), Eq(FLOAT_LITERAL));
-    EXPECT_THAT(yylval.val.float_v, FloatEq(4.5));
+    EXPECT_THAT(yylval.token.val.float_v, FloatEq(4.5));
     yylex_destroy();
 }
 
 TEST(LexemeTokenValue, AssignsFloatWithExponentTokenValue) {
     yy_scan_string("4.5e-3");
     EXPECT_THAT(yylex(), Eq(FLOAT_LITERAL));
-    EXPECT_THAT(yylval.val.float_v, FloatEq(4.5e-3));
+    EXPECT_THAT(yylval.token.val.float_v, FloatEq(4.5e-3));
     yylex_destroy();
 }
 
 TEST(LexemeTokenValue, AssignsCharTokenValue) {
     yy_scan_string("'a'");
     EXPECT_THAT(yylex(), Eq(CHAR_LITERAL));
-    EXPECT_THAT(yylval.val.char_v, Eq('a'));
+    EXPECT_THAT(yylval.token.val.char_v, Eq('a'));
     yylex_destroy();
 }
 
 TEST(LexemeTokenValue, AssignsStringTokenValue) {
     yy_scan_string("\"a string\"");
     EXPECT_THAT(yylex(), Eq(STRING_LITERAL));
-    EXPECT_THAT(yylval.val.string_v, StrEq("a string"));
-    free(yylval.val.string_v);
+    EXPECT_THAT(yylval.token.val.string_v, StrEq("a string"));
+    free(yylval.token.val.string_v);
     yylex_destroy();
 }
 
 TEST(LexemeTokenValue, AssignsFalseTokenValue) {
     yy_scan_string("false");
     EXPECT_THAT(yylex(), Eq(FALSE));
-    EXPECT_THAT(yylval.val.bool_v, Eq(false));
+    EXPECT_THAT(yylval.token.val.bool_v, Eq(false));
     yylex_destroy();
 }
 
 TEST(LexemeTokenValue, AssignsTrueTokenValue) {
     yy_scan_string("true");
     EXPECT_THAT(yylex(), Eq(TRUE));
-    EXPECT_THAT(yylval.val.bool_v, Eq(true));
+    EXPECT_THAT(yylval.token.val.bool_v, Eq(true));
     yylex_destroy();
 }

@@ -309,9 +309,9 @@ STRING \"(\\.|[^\\"])*\"
 %%
 
 void assign_token_value(enum yytokentype type) {
-    yylval.line = yylineno;
-    yylval.column = columnno;
-    yylval.type = type;
+    yylval.token.line = yylineno;
+    yylval.token.column = columnno;
+    yylval.token.type = type;
 
     union value val;
 
@@ -341,7 +341,7 @@ void assign_token_value(enum yytokentype type) {
             break;
     }
 
-    yylval.val = val;
+    yylval.token.val = val;
 }
 
 void count_column() {
