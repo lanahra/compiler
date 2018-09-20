@@ -1,11 +1,31 @@
 %{
 #include <stdio.h>
 #include "../include/lex.yy.h"
+
 int yylex();
 void yyerror(char const *s);
 extern int get_line_number();
 extern int get_column_number();
 %}
+
+%code requires {
+#include <stdbool.h>
+
+union value {
+    int int_v;
+    float float_v;
+    char char_v;
+    char* string_v;
+    bool bool_v;
+};
+}
+
+%union {
+    int line;
+    int column;
+    enum yytokentype type;
+    union value val;
+}
 
 %token INT
 %token FLOAT
@@ -47,8 +67,8 @@ extern int get_column_number();
 %token FALSE
 %token TRUE
 %token CHAR_LITERAL
-%token STRING_LITERAL
-%token ID
+%token <val.string_v> STRING_LITERAL
+%token <val.string_v> ID
 %token ERROR
 
 %start program
@@ -70,8 +90,8 @@ element
     ;
 
 element_definition
-    : ID global_var_declaration ';'
-    | ID ID element_specifier
+    : ID global_var_declaration ';' { free($1); }
+    | ID ID element_specifier { free($1); free($2); }
     | function_definition
     ;
 
@@ -86,7 +106,7 @@ global_var_type_specifier
     ;
 
 global_var_class_specifier
-    : static_modifier ID
+    : static_modifier ID { free($2); }
     ;
 
 array
@@ -117,12 +137,12 @@ literal
     | FALSE
     | TRUE
     | CHAR_LITERAL
-    | STRING_LITERAL
+    | STRING_LITERAL { free($1); }
     ;
 
 type_specifier
     : primitive_type_specifier
-    | ID
+    | ID { free($1); }
     ;
 
 element_specifier
@@ -131,7 +151,7 @@ element_specifier
     ;
 
 class_definition
-    : CLASS ID '[' field_list ']'
+    : CLASS ID '[' field_list ']' { free($2); }
     ;
 
 field_list
@@ -140,7 +160,7 @@ field_list
     ;
 
 field
-    : access_modifier primitive_type_specifier ID
+    : access_modifier primitive_type_specifier ID { free($3); }
     ;
 
 access_modifier
@@ -155,7 +175,7 @@ function_definition
     ;
 
 function_header
-    : static_modifier primitive_type_specifier ID parameters
+    : static_modifier primitive_type_specifier ID parameters { free($3); }
     ;
 
 parameters
@@ -169,7 +189,7 @@ parameter_list
     ;
 
 parameter
-    : const_modifier type_specifier ID
+    : const_modifier type_specifier ID { free($3); }
     ;
 
 command_block
@@ -215,7 +235,7 @@ local_var_declaration
     ;
 
 local_var_specifier
-    : primitive_type_specifier ID local_var_initialization
+    : primitive_type_specifier ID local_var_initialization { free($2); }
     ;
 
 local_var_initialization
@@ -224,20 +244,20 @@ local_var_initialization
     ;
 
 local_var_initializer
-    : ID
+    : ID { free($1); }
     | literal
     ;
 
 variable_attribution
-    : ID ID
+    : ID ID { free($1); free($2); }
     | variable '=' expression
     ;
 
 variable
-    : ID
-    | ID '$' ID
-    | ID '[' expression ']'
-    | ID '[' expression ']' '$' ID
+    : ID { free($1); }
+    | ID '$' ID { free($1); free($3); }
+    | ID '[' expression ']' { free($1); }
+    | ID '[' expression ']' '$' ID { free($1); free($6); }
     ;
 
 shift
@@ -275,7 +295,7 @@ function_call
     ;
 
 function
-    : ID '(' argument_list ')'
+    : ID '(' argument_list ')' { free($1); }
     ;
 
 pipe
@@ -295,7 +315,7 @@ argument
     ;
 
 foreach
-    : FOREACH '(' ID ':' expression_list ')' command_block
+    : FOREACH '(' ID ':' expression_list ')' command_block { free($3); }
     ;
 
 for

@@ -50,12 +50,6 @@ TEST(SyntaxClassDefinition, AcceptsClassDefinition) {
     yylex_destroy();
 }
 
-TEST(SyntaxClassDefinition, DoesNotAcceptNoFields) {
-    yy_scan_string("class new_class []");
-    EXPECT_NE(0, yyparse());
-    yylex_destroy();
-}
-
 TEST(SyntaxClassDefinition, AcceptsPrivateModifier) {
     yy_scan_string(
             "class new_class"

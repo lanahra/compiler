@@ -1,9 +1,12 @@
 %{
+#include <stdlib.h>
+#include <string.h>
 #include "../include/parser.tab.h"
 
-int column = 1;
+int columnno = 1;
 
-void count();
+void assign_token_value(enum yytokentype type);
+void count_column();
 %}
 
 LINE_COMMENT "//".*
@@ -23,208 +26,208 @@ STRING \"(\\.|[^\\"])*\"
 
 {LINE_COMMENT} {
     // ignore line comment
-    count();
+    count_column();
 }
 
 "/*" {
-    count();
+    count_column();
     BEGIN(BLOCK_COMMENT);
 }
 
 <BLOCK_COMMENT>{
 "*/" {
-    count();
+    count_column();
     BEGIN(INITIAL);
 }
 
 [^*]+ {
     // ignore block comment in chunks
-    count();
+    count_column();
 }
 
 "*" {
     // ignore asterisk inside block comment
-    count();
+    count_column();
 }
 }
 
 [ \t\n]+ {
     // ignore whitespace
-    count();
+    count_column();
 }
 
 "int" {
-    count();
+    count_column();
     return INT;
 }
 
 "float" {
-    count();
+    count_column();
     return FLOAT;
 }
 
 "bool" {
-    count();
+    count_column();
     return BOOL;
 }
 
 "char" {
-    count();
+    count_column();
     return CHAR;
 }
 
 "string" {
-    count();
+    count_column();
     return STRING;
 }
 
 "if" {
-    count();
+    count_column();
     return IF;
 }
 
 "then" {
-    count();
+    count_column();
     return THEN;
 }
 
 "else" {
-    count();
+    count_column();
     return ELSE;
 }
 
 "while" {
-    count();
+    count_column();
     return WHILE;
 }
 
 "do" {
-    count();
+    count_column();
     return DO;
 }
 
 "input" {
-    count();
+    count_column();
     return INPUT;
 }
 
 "output" {
-    count();
+    count_column();
     return OUTPUT;
 }
 
 "return" {
-    count();
+    count_column();
     return RETURN;
 }
 
 "const" {
-    count();
+    count_column();
     return CONST;
 }
 
 "static" {
-    count();
+    count_column();
     return STATIC;
 }
 
 "foreach" {
-    count();
+    count_column();
     return FOREACH;
 }
 
 "for" {
-    count();
+    count_column();
     return FOR;
 }
 
 "switch" {
-    count();
+    count_column();
     return SWITCH;
 }
 
 "case" {
-    count();
+    count_column();
     return CASE;
 }
 
 "break" {
-    count();
+    count_column();
     return BREAK;
 }
 
 "continue" {
-    count();
+    count_column();
     return CONTINUE;
 }
 
 "class" {
-    count();
+    count_column();
     return CLASS;
 }
 
 "private" {
-    count();
+    count_column();
     return PRIVATE;
 }
 
 "public" {
-    count();
+    count_column();
     return PUBLIC;
 }
 
 "protected" {
-    count();
+    count_column();
     return PROTECTED;
 }
 
 "<=" {
-    count();
+    count_column();
     return LE_OP;
 }
 
 ">=" {
-    count();
+    count_column();
     return GE_OP;
 }
 
 "==" {
-    count();
+    count_column();
     return EQ_OP;
 }
 
 "!=" {
-    count();
+    count_column();
     return NE_OP;
 }
 
 "&&" {
-    count();
+    count_column();
     return AND_OP;
 }
 
 "||" {
-    count();
+    count_column();
     return OR_OP;
 }
 
 "<<" {
-    count();
+    count_column();
     return SL_OP;
 }
 
 ">>" {
-    count();
+    count_column();
     return SR_OP;
 }
 
 "%>%" {
-    count();
+    count_column();
     return FORWARD_PIPE;
 }
 
 "%|%" {
-    count();
+    count_column();
     return BASH_PIPE;
 }
 
@@ -253,42 +256,49 @@ STRING \"(\\.|[^\\"])*\"
 "^" |
 "." |
 "$" {
-    count();
+    count_column();
     return (int) yytext[0];
 }
 
 "false" {
-    count();
+    assign_token_value(FALSE);
+    count_column();
     return FALSE;
 }
 
 "true" {
-    count();
+    assign_token_value(TRUE);
+    count_column();
     return TRUE;
 }
 
 {INTEGER} {
-    count();
+    assign_token_value(INT_LITERAL);
+    count_column();
     return INT_LITERAL;
 }
 
 {FLOAT} {
-    count();
+    assign_token_value(FLOAT_LITERAL);
+    count_column();
     return FLOAT_LITERAL;
 }
 
 {CHAR} {
-    count();
+    assign_token_value(CHAR_LITERAL);
+    count_column();
     return CHAR_LITERAL;
 }
 
 {STRING} {
-    count();
+    assign_token_value(STRING_LITERAL);
+    count_column();
     return STRING_LITERAL;
 }
 
 {ID} {
-    count();
+    assign_token_value(ID);
+    count_column();
     return ID;
 }
 
@@ -298,14 +308,50 @@ STRING \"(\\.|[^\\"])*\"
 
 %%
 
-void count() {
+void assign_token_value(enum yytokentype type) {
+    yylval.line = yylineno;
+    yylval.column = columnno;
+    yylval.type = type;
+
+    union value val;
+
+    switch (type) {
+        case INT_LITERAL:
+            val.int_v = atoi(yytext);
+            break;
+        case FLOAT_LITERAL:
+            val.float_v = atof(yytext);
+            break;
+        case CHAR_LITERAL:
+            val.char_v = yytext[1];
+            break;
+        case STRING_LITERAL:
+            val.string_v = strndup(yytext + 1, strlen(yytext) - 2);
+            break;
+        case ID:
+            val.string_v = strdup(yytext);
+            break;
+        case FALSE:
+            val.bool_v = false;
+            break;
+        case TRUE:
+            val.bool_v = true;
+            break;
+        default:
+            break;
+    }
+
+    yylval.val = val;
+}
+
+void count_column() {
     int i;
 
     for (i = 0; yytext[i] != '\0'; i++) {
         if (yytext[i] == '\n') {
-            column = 1;
+            columnno = 1;
         } else {
-            column++;
+            columnno++;
         }
     }
 }
@@ -315,5 +361,5 @@ int get_line_number() {
 }
 
 int get_column_number() {
-    return column;
+    return columnno;
 }
