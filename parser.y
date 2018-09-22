@@ -9,31 +9,26 @@ extern int get_column_number();
 %}
 
 %code requires {
-#include <stdbool.h>
-
-union value {
-    int int_v;
-    float float_v;
-    char char_v;
-    char* string_v;
-    bool bool_v;
-};
+#include "../include/node.h"
 }
 
 %union {
     struct token {
         int line;
         int column;
-        enum yytokentype type;
-        union value val;
+        int type;
+        union literal val;
     } token;
+    struct node* node;
+    struct type type;
+    enum access_modifier access;
 }
 
-%token INT
-%token FLOAT
-%token BOOL
-%token CHAR
-%token STRING
+%token <token.type> INT
+%token <token.type> FLOAT
+%token <token.type> BOOL
+%token <token.type> CHAR
+%token <token.type> STRING
 %token IF
 %token THEN
 %token ELSE
@@ -54,75 +49,148 @@ union value {
 %token PRIVATE
 %token PUBLIC
 %token PROTECTED
-%token LE_OP
-%token GE_OP
-%token EQ_OP
-%token NE_OP
-%token AND_OP
-%token OR_OP
-%token SL_OP
-%token SR_OP
-%token FORWARD_PIPE
-%token BASH_PIPE
-%token INT_LITERAL
-%token FLOAT_LITERAL
-%token FALSE
-%token TRUE
-%token CHAR_LITERAL
+%token <token.type> LE_OP
+%token <token.type> GE_OP
+%token <token.type> EQ_OP
+%token <token.type> NE_OP
+%token <token.type> AND_OP
+%token <token.type> OR_OP
+%token <token.type> SL_OP
+%token <token.type> SR_OP
+%token <token.type> FORWARD_PIPE
+%token <token.type> BASH_PIPE
+%token <token.val.int_v> INT_LITERAL
+%token <token.val.float_v> FLOAT_LITERAL
+%token <token.val.bool_v> FALSE
+%token <token.val.bool_v> TRUE
+%token <token.val.char_v> CHAR_LITERAL
 %token <token.val.string_v> STRING_LITERAL
 %token <token.val.string_v> ID
+%token <token.type> '+'
+%token <token.type> '-'
+%token <token.type> '!'
+%token <token.type> '*'
+%token <token.type> '&'
+%token <token.type> '?'
+%token <token.type> '#'
+%token <token.type> '^'
+%token <token.type> '/'
+%token <token.type> '%'
+%token <token.type> '>'
+%token <token.type> '<'
+%token <token.type> '|'
 %token ERROR
 
+%type <node> program
+%type <node> unit
+%type <node> element
+%type <node> global_var_declaration
+%type <token.val.int_v> array
+%type <token.val.bool_v> static_modifier
+%type <token.val.bool_v> const_modifier
+%type <token.type> primitive_type_specifier
+%type <node> literal
+%type <type> type_specifier
+%type <node> class_definition
+%type <node> field_list
+%type <node> field
+%type <access> access_modifier
+%type <node> function_definition
+%type <node> parameters
+%type <node> parameter_list
+%type <node> parameter
+%type <node> command_block
+%type <node> high_command_list
+%type <node> high_command
+%type <node> command_list
+%type <node> command
+%type <node> local_var_declaration
+%type <node> modifier_local_var_declaration
+%type <node> primitive_var_declaration
+%type <node> local_var_initialization
+%type <node> local_var_initializer
+%type <node> class_var_declaration
+%type <node> variable_attribution
+%type <node> variable
+%type <node> shift
+%type <token.type> shift_op
+%type <node> return
+%type <node> case
+%type <node> input
+%type <node> output
+%type <node> conditional_statement
+%type <node> else_statement
+%type <node> function_call
+%type <node> function
+%type <token.type> pipe
+%type <node> argument_list
+%type <node> argument
+%type <node> foreach
+%type <node> for
+%type <node> while
+%type <node> do_while
+%type <node> switch
+%type <node> expression_list
+%type <node> expression
+%type <node> pipe_exp
+%type <node> ternary_exp
+%type <node> logical_or_exp
+%type <node> logical_and_exp
+%type <node> bitwise_or_exp
+%type <node> bitwise_and_exp
+%type <node> equality_exp
+%type <node> relational_exp
+%type <node> additive_exp
+%type <node> multiplicative_exp
+%type <node> exponentiation_exp
+%type <node> unary_exp
+%type <token.type> unary_operator
+%type <node> operand
+
 %start program
+
+%destructor { free_node($$); } <node>
+%destructor { free($$); } <token.val.string_v>
 %%
 
 program
-    : %empty
+    : %empty { $$ = 0; }
     | unit
     ;
 
 unit
     : element
-    | unit element
+    | unit element { $$ = make_unit($1, $2); }
     ;
 
 element
-    : element_definition
+    : global_var_declaration ';'
     | class_definition ';'
-    ;
-
-element_definition
-    : ID global_var_declaration ';' { free($1); }
-    | ID ID element_specifier { free($1); free($2); }
     | function_definition
     ;
 
 global_var_declaration
-    : global_var_type_specifier
-    | array global_var_type_specifier
-    | array global_var_class_specifier
-    ;
-
-global_var_type_specifier
-    : static_modifier primitive_type_specifier
-    ;
-
-global_var_class_specifier
-    : static_modifier ID { free($2); }
+    : ID primitive_type_specifier {
+        $$ = make_global_var_decl($1, -1, false, make_primitive($2)); }
+    | ID ID {
+        $$ = make_global_var_decl($1, -1, false, make_custom($2)); }
+    | ID array static_modifier type_specifier {
+        $$ = make_global_var_decl($1, $2, $3, $4); }
+    | ID STATIC type_specifier { $$ = make_global_var_decl($1, -1, true, $3); }
     ;
 
 array
-    : '[' INT_LITERAL ']'
+    : '[' INT_LITERAL ']' { $$ = $2; }
     ;
 
 static_modifier
-    : %empty
-    | STATIC
+    : %empty { $$ = false; }
+    | STATIC { $$ = true; }
     ;
 
 const_modifier
-    : %empty
-    | CONST
+    : %empty { $$ = false; }
+    | CONST { $$ = true; }
     ;
 
 primitive_type_specifier
@@ -134,74 +202,77 @@ primitive_type_specifier
     ;
 
 literal
-    : INT_LITERAL
-    | FLOAT_LITERAL
-    | FALSE
-    | TRUE
-    | CHAR_LITERAL
-    | STRING_LITERAL { free($1); }
+    : INT_LITERAL {
+        $$ = make_int_literal($1); }
+    | FLOAT_LITERAL {
+        $$ = make_float_literal($1); }
+    | FALSE {
+        $$ = make_bool_literal($1); }
+    | TRUE {
+        $$ = make_bool_literal($1); }
+    | CHAR_LITERAL {
+        $$ = make_char_literal($1); }
+    | STRING_LITERAL {
+        $$ = make_string_literal($1); }
     ;
 
 type_specifier
-    : primitive_type_specifier
-    | ID { free($1); }
-    ;
-
-element_specifier
-    : ';'
-    | parameters command_block
+    : primitive_type_specifier { $$ = make_primitive($1); }
+    | ID { $$ = make_custom($1); }
     ;
 
 class_definition
-    : CLASS ID '[' field_list ']' { free($2); }
+    : CLASS ID '[' field_list ']' { $$ = make_class_def($2, $4); }
     ;
 
 field_list
     : field
-    | field_list ':' field
+    | field_list ':' field { $$ = make_field_list($1, $3); }
     ;
 
 field
-    : access_modifier primitive_type_specifier ID { free($3); }
+    : access_modifier primitive_type_specifier ID {
+        $$ = make_field($1, make_primitive($2), $3); }
     ;
 
 access_modifier
-    : %empty
-    | PRIVATE
-    | PUBLIC
-    | PROTECTED
+    : %empty { $$ = NONE; }
+    | PRIVATE { $$ = PRIV; }
+    | PUBLIC { $$ = PUB; }
+    | PROTECTED { $$ = PROT; }
     ;
 
 function_definition
-    : function_header command_block
-    ;
-
-function_header
-    : static_modifier primitive_type_specifier ID parameters { free($3); }
+    : primitive_type_specifier ID parameters command_block {
+        $$ = make_function_def(false, make_primitive($1), $2, $3, $4); }
+    | ID ID parameters command_block {
+        $$ = make_function_def(false, make_custom($1), $2, $3, $4); }
+    | STATIC type_specifier ID parameters command_block {
+        $$ = make_function_def(true, $2, $3, $4, $5); }
     ;
 
 parameters
-    : '(' ')'
-    | '(' parameter_list ')'
+    : '(' ')' { $$ = 0; }
+    | '(' parameter_list ')' { $$ = $2; }
     ;
 
 parameter_list
     : parameter
-    | parameter_list ',' parameter
+    | parameter_list ',' parameter { $$ = make_param_list($1, $3); }
     ;
 
 parameter
-    : const_modifier type_specifier ID { free($3); }
+    : const_modifier type_specifier ID { $$ = make_parameter($1, $2, $3); }
     ;
 
 command_block
-    : '{' '}'
-    | '{' high_command_list '}'
+    : '{' '}' { $$ = 0; }
+    | '{' high_command_list '}' { $$ = $2; }
     ;
 
 high_command_list
     : high_command
-    | high_command_list high_command
+    | high_command_list high_command { $$ = make_high_list($1, $2); }
     ;
 
 high_command
@@ -212,15 +283,16 @@ high_command
 
 command_list
     : command
-    | command_list ',' command
+    | command_list ',' command { $$ = make_cmd_list($1, $3); }
 
 command
     : local_var_declaration
+    | modifier_local_var_declaration
     | variable_attribution
     | shift
     | return
-    | BREAK
-    | CONTINUE
+    | BREAK { $$ = make_break_cmd(); }
+    | CONTINUE { $$ = make_continue_cmd(); }
     | input
     | conditional_statement
     | function_call
@@ -233,71 +305,87 @@ command
     ;
 
 local_var_declaration
-    : static_modifier const_modifier local_var_specifier
+    : primitive_var_declaration
+    | class_var_declaration
     ;
 
-local_var_specifier
-    : primitive_type_specifier ID local_var_initialization { free($2); }
+modifier_local_var_declaration
+    : STATIC const_modifier local_var_declaration {
+        $$ = add_decl_modifier(true, $2, $3); }
+    | CONST local_var_declaration { $$ = add_decl_modifier(false, true, $2); }
+    ;
+
+primitive_var_declaration
+    : primitive_type_specifier ID local_var_initialization {
+        $$ = make_var_decl($1, $2, $3); }
     ;
 
 local_var_initialization
-    : %empty
-    | LE_OP local_var_initializer
+    : %empty { $$ = 0; }
+    | LE_OP local_var_initializer { $$ = $2; }
     ;
 
 local_var_initializer
-    : ID { free($1); }
+    : variable
     | literal
     ;
 
+class_var_declaration
+    : ID ID { $$ = make_class_var_decl($1, $2); }
+    ;
+
 variable_attribution
-    : ID ID { free($1); free($2); }
-    | variable '=' expression
+    : variable '=' expression { $$ = make_attr_cmd($1, $3); }
     ;
 
 variable
-    : ID { free($1); }
-    | ID '$' ID { free($1); free($3); }
-    | ID '[' expression ']' { free($1); }
-    | ID '[' expression ']' '$' ID { free($1); free($6); }
+    : ID { $$ = make_var($1, 0, 0); }
+    | ID '$' ID { $$ = make_var($1, $3, 0); }
+    | ID '[' expression ']' { $$ = make_var($1, 0, $3); }
+    | ID '[' expression ']' '$' ID { $$ = make_var($1, $6, $3); }
     ;
 
 shift
-    : variable SL_OP expression
-    | variable SR_OP expression
+    : variable shift_op expression { $$ = make_shift_cmd($1, $2, $3); }
+    ;
+
+shift_op
+    : SL_OP
+    | SR_OP
     ;
 
 return
-    : RETURN expression
+    : RETURN expression { $$ = make_return_cmd($2); }
     ;
 
 case
-    : CASE INT_LITERAL ':'
+    : CASE INT_LITERAL ':' { $$ = make_case_label($2); }
     ;
 
 input
-    : INPUT expression
+    : INPUT expression { $$ = make_in_cmd($2); }
 
 output
-    : OUTPUT expression_list
+    : OUTPUT expression_list { $$ = make_out_cmd($2); }
     ;
 
 conditional_statement
-    : IF '(' expression ')' THEN command_block else_statement
+    : IF '(' expression ')' THEN command_block else_statement {
+        $$ = make_if_cmd($3, $6, $7); }
     ;
 
 else_statement
-    : %empty
-    | ELSE command_block
+    : %empty { $$ = 0; }
+    | ELSE command_block { $$ = $2; }
     ;
 
 function_call
     : function
-    | function_call pipe function
+    | function_call pipe function { $$ = make_pipe_cmd($1, $2, $3); }
     ;
 
 function
-    : ID '(' argument_list ')' { free($1); }
+    : ID '(' argument_list ')' { $$ = make_function_cmd($1, $3); }
     ;
 
 pipe
@@ -306,38 +394,41 @@ pipe
     ;
 
 argument_list
-    : %empty
+    : %empty { $$ = 0; }
     | argument
-    | argument_list ',' argument
+    | argument_list ',' argument { $$ = make_arg_list($1, $3); }
     ;
 
 argument
-    : '.'
+    : '.' { $$ = make_dot_arg(); }
     | expression
     ;
 
 foreach
-    : FOREACH '(' ID ':' expression_list ')' command_block { free($3); }
+    : FOREACH '(' ID ':' expression_list ')' command_block {
+        $$ = make_foreach_cmd($3, $5, $7); }
     ;
 
 for
-    : FOR '(' command_list ':' expression ':' command_list ')' command_block
+    : FOR '(' command_list ':' expression ':' command_list ')' command_block {
+        $$ = make_for_cmd($3, $5, $7, $9); }
     ;
 
 while
-    : WHILE '(' expression ')' DO command_block
+    : WHILE '(' expression ')' DO command_block { $$ = make_while_cmd($3, $6); }
     ;
 
 do_while
-    : DO command_block WHILE '(' expression ')'
+    : DO command_block WHILE '(' expression ')' {
+        $$ = make_do_while_cmd($2, $5); }
 
 switch
-    : SWITCH '(' expression ')' command_block
+    : SWITCH '(' expression ')' command_block { $$ = make_switch_cmd($3, $5); }
     ;
 
 expression_list
     : expression
-    | expression_list ',' expression
+    | expression_list ',' expression { $$ = make_exp_list($1, $3); }
     ;
 
 expression
@@ -346,69 +437,76 @@ expression
 
 pipe_exp
     : ternary_exp
-    | pipe_exp FORWARD_PIPE ternary_exp
-    | pipe_exp BASH_PIPE ternary_exp
+    | pipe_exp FORWARD_PIPE ternary_exp { $$ = make_binary_exp($1, $2, $3); }
+    | pipe_exp BASH_PIPE ternary_exp { $$ = make_binary_exp($1, $2, $3); }
     ;
 
 ternary_exp
     : logical_or_exp
-    | logical_or_exp '?' expression ':' ternary_exp
+    | logical_or_exp '?' expression ':' ternary_exp {
+        $$ = make_ternary_exp($1, $3, $5); }
+    ;
 
 logical_or_exp
     : logical_and_exp
-    | logical_or_exp OR_OP logical_and_exp
+    | logical_or_exp OR_OP logical_and_exp {
+        $$ = make_binary_exp($1, $2, $3); }
     ;
 
 logical_and_exp
     : bitwise_or_exp
-    | logical_and_exp AND_OP bitwise_or_exp
+    | logical_and_exp AND_OP bitwise_or_exp {
+        $$ = make_binary_exp($1, $2, $3); }
     ;
 
 bitwise_or_exp
     : bitwise_and_exp
-    | bitwise_or_exp '|' bitwise_and_exp
+    | bitwise_or_exp '|' bitwise_and_exp { $$ = make_binary_exp($1, $2, $3); }
     ;
 
 bitwise_and_exp
     : equality_exp
-    | bitwise_and_exp '&' equality_exp
+    | bitwise_and_exp '&' equality_exp { $$ = make_binary_exp($1, $2, $3); }
     ;
 
 equality_exp
     : relational_exp
-    | equality_exp EQ_OP relational_exp
-    | equality_exp NE_OP relational_exp
+    | equality_exp EQ_OP relational_exp { $$ = make_binary_exp($1, $2, $3); }
+    | equality_exp NE_OP relational_exp { $$ = make_binary_exp($1, $2, $3); }
     ;
 
 relational_exp
     : additive_exp
-    | relational_exp '<' additive_exp
-    | relational_exp '>' additive_exp
-    | relational_exp LE_OP additive_exp
-    | relational_exp GE_OP additive_exp
+    | relational_exp '<' additive_exp { $$ = make_binary_exp($1, $2, $3); }
+    | relational_exp '>' additive_exp { $$ = make_binary_exp($1, $2, $3); }
+    | relational_exp LE_OP additive_exp { $$ = make_binary_exp($1, $2, $3); }
+    | relational_exp GE_OP additive_exp { $$ = make_binary_exp($1, $2, $3); }
     ;
 
 additive_exp
     : multiplicative_exp
-    | additive_exp '+' multiplicative_exp
-    | additive_exp '-' multiplicative_exp
+    | additive_exp '+' multiplicative_exp { $$ = make_binary_exp($1, $2, $3); }
+    | additive_exp '-' multiplicative_exp { $$ = make_binary_exp($1, $2, $3); }
     ;
 
 multiplicative_exp
     : exponentiation_exp
-    | multiplicative_exp '*' exponentiation_exp
-    | multiplicative_exp '/' exponentiation_exp
-    | multiplicative_exp '%' exponentiation_exp
+    | multiplicative_exp '*' exponentiation_exp {
+        $$ = make_binary_exp($1, $2, $3); }
+    | multiplicative_exp '/' exponentiation_exp {
+        $$ = make_binary_exp($1, $2, $3); }
+    | multiplicative_exp '%' exponentiation_exp {
+        $$ = make_binary_exp($1, $2, $3); }
     ;
 
 exponentiation_exp
     : unary_exp
-    | exponentiation_exp '^' unary_exp
+    | exponentiation_exp '^' unary_exp { $$ = make_binary_exp($1, $2, $3); }
     ;
 
 unary_exp
     : operand
-    | unary_operator unary_exp
+    | unary_operator unary_exp { $$ = make_unary_exp($1, $2); }
     ;
 
 unary_operator
@@ -425,7 +523,7 @@ operand
     : variable
     | literal
     | function
-    | '(' expression ')'
+    | '(' expression ')' { $$ = $2; }
     ;
 
 %%

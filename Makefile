@@ -9,9 +9,8 @@ TEST_LD_FLAGS = -L/usr/local/lib -lfl -lgtest -lpthread
 TESTS := $(wildcard $(TEST_DIR)/*.cpp)
 TEST_OBJ := $(TESTS:$(TEST_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-SOURCES := $(wildcard $(SRC_DIR)/*.c)
-SOURCES += $(addprefix $(SRC_DIR)/, lex.yy.c parser.tab.c)
-OBJECTS := $(SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+SOURCES := $(addprefix $(SOURCE_DIR)/, node.c lex.yy.c parser.tab.c)
+OBJECTS := $(SOURCES:$(SOURCE_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 TARGET = etapa2
 
@@ -23,18 +22,19 @@ $(TARGET): yy $(OBJECTS)
 	gcc -Wall main.c $(OBJECTS) -lfl -o $@
 
 test: dir yy $(OBJECTS) $(TEST_OBJ)
-	g++ -o run_test $(OBJECTS) $(TEST_OBJ) $(TEST_LD_FLAGS)
+	g++ -g -Wall -o run_test $(OBJECTS) $(TEST_OBJ) $(TEST_LD_FLAGS)
 	valgrind -v --leak-check=full ./run_test
+
 
 yy:
 	flex -o src/lex.yy.c --header-file=include/lex.yy.h scanner.l
-	bison -Wall -o src/parser.tab.c --defines=include/parser.tab.h parser.y
+	bison -v -Wall -o src/parser.tab.c --defines=include/parser.tab.h parser.y
 
 $(OBJECTS): $(OBJ_DIR)/%.o : $(SOURCE_DIR)/%.c
-	gcc -Wall -c $< -o $@
+	gcc -g -Wall -c $< -o $@
 
 $(TEST_OBJ): $(OBJ_DIR)/%.o: $(TEST_DIR)/%.cpp
-	g++ -Wall $(TEST_INCLUDE) -c $< -o $@
+	g++ -g -Wall $(TEST_INCLUDE) -c $< -o $@
 
 dir:
 	mkdir -p obj include src

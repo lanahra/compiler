@@ -189,6 +189,15 @@ TEST(SyntaxLocalVariable, AcceptsVarUserTypeDeclaration) {
     yylex_destroy();
 }
 
+TEST(SyntaxLocalVariable, AcceptsStaticConstVarUserTypeDeclaration) {
+    yy_scan_string(
+            "int main() {"
+            "  static const new_type local_var;"
+            "}");
+    EXPECT_EQ(0, yyparse());
+    yylex_destroy();
+}
+
 TEST(SyntaxLocalVariable, DoesNotAcceptUserTypeVarInitialization) {
     yy_scan_string(
             "int main() {"
@@ -356,7 +365,11 @@ TEST(SyntaxConditionalStatement, AcceptsIfThenStatement) {
 TEST(SyntaxConditionalStatement, AcceptsIfThenElseStatement) {
     yy_scan_string(
             "int main() {"
-            "  if (expressions) then {} else {};"
+            "  if (expressions) then {"
+            "    break;"
+            "  } else {"
+            "    break;"
+            "  };"
             "}");
     EXPECT_EQ(0, yyparse());
     yylex_destroy();

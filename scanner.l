@@ -5,7 +5,7 @@
 
 int columnno = 1;
 
-void assign_token_value(enum yytokentype type);
+void assign_token_value(int type);
 void count_column();
 %}
 
@@ -57,26 +57,31 @@ STRING \"(\\.|[^\\"])*\"
 }
 
 "int" {
+    assign_token_value(INT);
     count_column();
     return INT;
 }
 
 "float" {
+    assign_token_value(FLOAT);
     count_column();
     return FLOAT;
 }
 
 "bool" {
+    assign_token_value(BOOL);
     count_column();
     return BOOL;
 }
 
 "char" {
+    assign_token_value(CHAR);
     count_column();
     return CHAR;
 }
 
 "string" {
+    assign_token_value(STRING);
     count_column();
     return STRING;
 }
@@ -182,51 +187,61 @@ STRING \"(\\.|[^\\"])*\"
 }
 
 "<=" {
+    assign_token_value(LE_OP);
     count_column();
     return LE_OP;
 }
 
 ">=" {
+    assign_token_value(GE_OP);
     count_column();
     return GE_OP;
 }
 
 "==" {
+    assign_token_value(EQ_OP);
     count_column();
     return EQ_OP;
 }
 
 "!=" {
+    assign_token_value(NE_OP);
     count_column();
     return NE_OP;
 }
 
 "&&" {
+    assign_token_value(AND_OP);
     count_column();
     return AND_OP;
 }
 
 "||" {
+    assign_token_value(OR_OP);
     count_column();
     return OR_OP;
 }
 
 "<<" {
+    assign_token_value(SL_OP);
     count_column();
     return SL_OP;
 }
 
 ">>" {
+    assign_token_value(SR_OP);
     count_column();
     return SR_OP;
 }
 
 "%>%" {
+    assign_token_value(FORWARD_PIPE);
     count_column();
     return FORWARD_PIPE;
 }
 
 "%|%" {
+    assign_token_value(BASH_PIPE);
     count_column();
     return BASH_PIPE;
 }
@@ -256,8 +271,10 @@ STRING \"(\\.|[^\\"])*\"
 "^" |
 "." |
 "$" {
+    int token = (int) yytext[0];
+    assign_token_value(token);
     count_column();
-    return (int) yytext[0];
+    return token;
 }
 
 "false" {
@@ -308,12 +325,12 @@ STRING \"(\\.|[^\\"])*\"
 
 %%
 
-void assign_token_value(enum yytokentype type) {
+void assign_token_value(int type) {
     yylval.token.line = yylineno;
     yylval.token.column = columnno;
     yylval.token.type = type;
 
-    union value val;
+    union literal val;
 
     switch (type) {
         case INT_LITERAL:
