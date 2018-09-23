@@ -255,6 +255,12 @@ struct node* make_high_list(struct node* high_list, struct node* cmd) {
     return node;
 }
 
+struct node* make_cmd_block(struct node* high_list) {
+    struct node* node = alloc_node(N_CMD_BLOCK);
+    node->val.cmd_block.high_list = high_list;
+    return node;
+}
+
 struct type make_primitive(int type) {
     struct type type_t;
     type_t.key = PRIMITIVE;
@@ -440,6 +446,9 @@ void free_node(struct node* node) {
                 free_node(node->val.high_list.high_list);
                 free_node(node->val.high_list.cmd);
                 break;
+            case N_CMD_BLOCK:
+                free_node(node->val.cmd_block.high_list);
+                break;
             case N_PARAM:
                 if (node->val.parameter.type.key == CUSTOM) {
                     free(node->val.parameter.type.val.custom);
@@ -590,41 +599,31 @@ void decompile_node(struct node* node) {
             case N_SWITCH:
                 printf("switch (");
                 decompile_node(node->val.switch_cmd.control_exp);
-                printf(") {\n");
+                printf(") ");
 
                 if (node->val.switch_cmd.cmd_block != 0) {
                     decompile_node(node->val.switch_cmd.cmd_block);
-                    printf(is_case_cmd ? "\n" : ";\n");
-                    is_case_cmd = false;
                 }
-
-                printf("}");
                 break;
             case N_DO_WHILE:
-                printf("do {\n");
+                printf("do ");
 
                 if (node->val.do_while_cmd.cmd_block != 0) {
                     decompile_node(node->val.do_while_cmd.cmd_block);
-                    printf(is_case_cmd ? "\n" : ";\n");
-                    is_case_cmd = false;
                 }
 
-                printf("} while (");
+                printf(" while (");
                 decompile_node(node->val.do_while_cmd.condition);
                 printf(")");
                 break;
             case N_WHILE:
                 printf("while (");
                 decompile_node(node->val.while_cmd.condition);
-                printf(") {\n");
+                printf(") do ");
 
                 if (node->val.while_cmd.cmd_block != 0) {
                     decompile_node(node->val.while_cmd.cmd_block);
-                    printf(is_case_cmd ? "\n" : ";\n");
-                    is_case_cmd = false;
                 }
-
-                printf("}");
                 break;
             case N_FOR:
                 printf("for (");
@@ -633,28 +632,20 @@ void decompile_node(struct node* node) {
                 decompile_node(node->val.for_cmd.condition);
                 printf(" : ");
                 decompile_node(node->val.for_cmd.update);
-                printf(") {\n");
+                printf(") ");
 
                 if (node->val.for_cmd.cmd_block != 0) {
                     decompile_node(node->val.for_cmd.cmd_block);
-                    printf(is_case_cmd ? "\n" : ";\n");
-                    is_case_cmd = false;
                 }
-
-                printf("}");
                 break;
             case N_FOREACH:
                 printf("foreach (%s : ", node->val.foreach_cmd.item);
                 decompile_node(node->val.foreach_cmd.exp_list);
-                printf(") {\n");
+                printf(") ");
 
                 if (node->val.foreach_cmd.cmd_block != 0) {
                     decompile_node(node->val.foreach_cmd.cmd_block);
-                    printf(is_case_cmd ? "\n" : ";\n");
-                    is_case_cmd = false;
                 }
-
-                printf("}");
                 break;
             case N_DOT_ARG:
                 printf(".");
@@ -686,21 +677,15 @@ void decompile_node(struct node* node) {
             case N_IF:
                 printf("if (");
                 decompile_node(node->val.if_cmd.condition);
-                printf(") {\n");
+                printf(") ");
 
                 if (node->val.if_cmd.then_cmd_block != 0) {
                     decompile_node(node->val.if_cmd.then_cmd_block);
-                    printf(is_case_cmd ? "\n" : ";\n");
-                    is_case_cmd = false;
                 }
 
-                printf("}");
-
                 if (node->val.if_cmd.else_cmd_block != 0) {
-                    printf(" else {\n");
+                    printf("else ");
                     decompile_node(node->val.if_cmd.else_cmd_block);
-                    printf(is_case_cmd ? "}" : ";}");
-                    is_case_cmd = false;
                 }
 
                 break;
@@ -787,6 +772,17 @@ void decompile_node(struct node* node) {
                 is_case_cmd = false;
                 decompile_node(node->val.high_list.cmd);
                 break;
+            case N_CMD_BLOCK:
+                printf("{\n");
+
+                if (node->val.cmd_block.high_list != 0) {
+                    decompile_node(node->val.cmd_block.high_list);
+                    printf(is_case_cmd ? "\n" : ";\n");
+                    is_case_cmd = false;
+                }
+
+                printf("}\n");
+                break;
             case N_PARAM:
                 if (node->val.parameter.is_const) {
                     printf("const ");
@@ -808,15 +804,11 @@ void decompile_node(struct node* node) {
                 decompile_type(node->val.function_def.type);
                 printf(" %s (", node->val.function_def.name);
                 decompile_node(node->val.function_def.params);
-                printf(") {\n");
+                printf(") ");
 
                 if (node->val.function_def.cmd_block != 0) {
                     decompile_node(node->val.function_def.cmd_block);
-                    printf(is_case_cmd ? "\n" : ";\n");
-                    is_case_cmd = false;
                 }
-
-                printf("}\n");
                 break;
             case N_FIELD:
                 switch (node->val.field.access) {

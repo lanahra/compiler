@@ -568,7 +568,7 @@ TEST(SyntaxOperand, AcceptsLiteralInt) {
 TEST(SyntaxOperand, AcceptsLiteralFloat) {
     yy_scan_string(
             "int main() {"
-            "  local_var = 12.23e-10;"
+            "  local_var = 12.23e-1;"
             "}");
     EXPECT_EQ(0, yyparse());
     yylex_destroy();

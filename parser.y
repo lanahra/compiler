@@ -155,7 +155,7 @@ extern int get_column_number();
 
 program
     : %empty { $$ = 0; }
-    | unit
+    | unit { $$ = $1; decompile_node($1); }
     ;
 
 unit
@@ -266,8 +266,8 @@ parameter
     ;
 
 command_block
-    : '{' '}' { $$ = 0; }
-    | '{' high_command_list '}' { $$ = $2; }
+    : '{' '}' { $$ = make_cmd_block(0); }
+    | '{' high_command_list '}' { $$ = make_cmd_block($2); }
     ;
 
 high_command_list

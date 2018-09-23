@@ -31,6 +31,7 @@ enum node_type {
     N_ATTRIBUTION,
     N_LOCAL_VAR_DECL,
     N_CMD_LIST,
+    N_CMD_BLOCK,
     N_HIGH_LIST,
     N_PARAM,
     N_PARAM_LIST,
@@ -183,6 +184,10 @@ struct high_list {
     struct node* cmd;
 };
 
+struct cmd_block {
+    struct node* high_list;
+};
+
 struct parameter {
     bool is_const;
     struct type type;
@@ -257,6 +262,7 @@ union node_value {
     struct local_var_decl local_var_decl;
     struct cmd_list cmd_list;
     struct high_list high_list;
+    struct cmd_block cmd_block;
     struct parameter parameter;
     struct param_list param_list;
     struct function_def function_def;
@@ -321,6 +327,7 @@ struct node* add_decl_modifier(bool is_static,
                                struct node* decl);
 struct node* make_cmd_list(struct node* cmd_list, struct node* cmd);
 struct node* make_high_list(struct node* high_list, struct node* cmd);
+struct node* make_cmd_block(struct node* high_list);
 struct type make_primitive(int type);
 struct type make_custom(char* type);
 struct node* make_parameter(bool is_const, struct type type, char* name);
