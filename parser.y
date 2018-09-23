@@ -6,6 +6,8 @@ int yylex();
 void yyerror(char const *s);
 extern int get_line_number();
 extern int get_column_number();
+
+extern void *arvore;
 %}
 
 %code requires {
@@ -149,13 +151,11 @@ extern int get_column_number();
 
 %start program
 
-%destructor { free_node($$); } <node>
-%destructor { free($$); } <token.val.string_v>
 %%
 
 program
     : %empty { $$ = 0; }
-    | unit { $$ = $1; decompile_node($1); }
+    | unit { $$ = $1; arvore = $1; }
     ;
 
 unit
@@ -531,4 +531,12 @@ operand
 void yyerror(char const *s) {
     char error[] = "Unexpected token: %s at line %d column %d\n";
     fprintf(stderr, error, yytext, get_line_number(), get_column_number());
+}
+
+void descompila(void *arvore) {
+    decompile_node((struct node*) arvore);
+}
+
+void libera(void *arvore) {
+    free_node((struct node*) arvore);
 }

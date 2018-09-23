@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 extern "C" {
+void* arvore = 0;
+void libera(void *arvore);
 #include "../include/lex.yy.h"
 #include "../include/parser.tab.h"
 }
@@ -8,36 +10,42 @@ extern "C" {
 TEST(SyntaxEmptyProgram, AcceptsEmptyProgram) {
     yy_scan_string("//this is an empty program");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
 TEST(SyntaxGlobalVariable, AcceptsVarDeclaration) {
     yy_scan_string("var int;");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
 TEST(SyntaxGlobalVariable, AcceptsVarDeclarationStatic) {
     yy_scan_string("var static bool;");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
 TEST(SyntaxGlobalVariable, AcceptsVarDeclarationArray) {
     yy_scan_string("var[12] char;");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
 TEST(SyntaxGlobalVariable, AcceptsVarDeclarationStaticArray) {
     yy_scan_string("var[12] static float;");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
 TEST(SyntaxGlobalVariable, AcceptsVarDeclarationUserType) {
     yy_scan_string("var new_type;");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -47,6 +55,7 @@ TEST(SyntaxClassDefinition, AcceptsClassDefinition) {
             "  [ string new_field"
             "  ];");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -56,6 +65,7 @@ TEST(SyntaxClassDefinition, AcceptsPrivateModifier) {
             "  [ private string new_field"
             "  ];");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -65,6 +75,7 @@ TEST(SyntaxClassDefinition, AcceptsPublicModifier) {
             "  [ public string new_field"
             "  ];");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -74,6 +85,7 @@ TEST(SyntaxClassDefinition, AcceptsProtectedModifier) {
             "  [ protected string new_field"
             "  ];");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -85,18 +97,21 @@ TEST(SyntaxClassDefinition, AcceptsMultipleFields) {
             "  : int another_one"
             "  ];");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
 TEST(SyntaxFunctionHeader, AcceptsFunctionHeaderNoParameters) {
     yy_scan_string("int new_function() {}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
 TEST(SyntaxFunctionHeader, AcceptsFunctionHeaderOneParameter) {
     yy_scan_string("float new_function(string new_parameter) {}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -109,18 +124,21 @@ TEST(SyntaxFunctionHeader, AcceptsFunctionHeaderMultipleParameters) {
             "  , some_type yet_another"
             "  ) {}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
 TEST(SyntaxFunctionHeader, AcceptsFunctionHeaderStaticModifier) {
     yy_scan_string("static float new_function(string new_parameter) {}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
 TEST(SyntaxFunctionHeader, AcceptsFunctionHeaderUserType) {
     yy_scan_string("new_type new_function(other_type new_parameter) {}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -132,6 +150,7 @@ TEST(SyntaxFunctionHeader, AcceptsFunctionBodyMultipleCommands) {
             "  char yet_another_local_var;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -141,6 +160,7 @@ TEST(SyntaxLocalVariable, AcceptsVarDeclaration) {
             "  int local_var;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -150,6 +170,7 @@ TEST(SyntaxLocalVariable, AcceptsStaticVarDeclaration) {
             "  static float local_var;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -159,6 +180,7 @@ TEST(SyntaxLocalVariable, AcceptsConstVarDeclaration) {
             "  const char local_var;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -168,6 +190,7 @@ TEST(SyntaxLocalVariable, AcceptsStaticConstVarDeclaration) {
             "  static const bool local_var;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -177,6 +200,7 @@ TEST(SyntaxLocalVariable, AcceptsVarInitialization) {
             "  bool local_var <= true;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -186,6 +210,7 @@ TEST(SyntaxLocalVariable, AcceptsVarUserTypeDeclaration) {
             "  new_type local_var;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -195,15 +220,7 @@ TEST(SyntaxLocalVariable, AcceptsStaticConstVarUserTypeDeclaration) {
             "  static const new_type local_var;"
             "}");
     EXPECT_EQ(0, yyparse());
-    yylex_destroy();
-}
-
-TEST(SyntaxLocalVariable, DoesNotAcceptUserTypeVarInitialization) {
-    yy_scan_string(
-            "int main() {"
-            "  new_type local_var <= 12;"
-            "}");
-    EXPECT_NE(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -213,6 +230,7 @@ TEST(SyntaxVariableAttribution, AcceptsVarAttribution) {
             "  local_var = expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -222,6 +240,7 @@ TEST(SyntaxVariableAttribution, AcceptsVarArrayAttribution) {
             "  local_var[expression] = expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -231,6 +250,7 @@ TEST(SyntaxVariableAttribution, AcceptsVarUserTypeAttribution) {
             "  local_var$field = expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -240,6 +260,7 @@ TEST(SyntaxVariableAttribution, AcceptsVarUserTypeArrayAttribution) {
             "  local_var[expression]$field = expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -249,6 +270,7 @@ TEST(SyntaxShiftOp, AcceptsLeftShiftOp) {
             "  local_var << expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -258,6 +280,7 @@ TEST(SyntaxShiftOp, AcceptsLeftShiftOpArray) {
             "  local_var[expression] << expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -267,6 +290,7 @@ TEST(SyntaxShiftOp, AcceptsLeftShiftOpUserType) {
             "  local_var$field << expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -276,6 +300,7 @@ TEST(SyntaxShiftOp, AcceptsLeftShiftOpArrayUserType) {
             "  local_var[expression]$field << expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -285,6 +310,7 @@ TEST(SyntaxShiftOp, AcceptsRightShiftOp) {
             "  local_var >> expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -294,6 +320,7 @@ TEST(SyntaxShiftOp, AcceptsRightShiftOpArray) {
             "  local_var[expression] >> expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -303,6 +330,7 @@ TEST(SyntaxShiftOp, AcceptsRightShiftOpUserType) {
             "  local_var$field >> expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -312,6 +340,7 @@ TEST(SyntaxShiftOp, AcceptsRightShiftOpArrayUserType) {
             "  local_var[expression]$field >> expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -321,6 +350,7 @@ TEST(SyntaxReturn, AcceptsReturnStatement) {
             "  return local_var;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -330,6 +360,7 @@ TEST(SyntaxContinue, AcceptsContinueStatement) {
             "  continue;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -339,6 +370,7 @@ TEST(SyntaxBreak, AcceptsBreakStatement) {
             "  break;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -350,6 +382,7 @@ TEST(SyntaxCase, AcceptsCaseStatement) {
             "  case 2:"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -359,6 +392,7 @@ TEST(SyntaxConditionalStatement, AcceptsIfThenStatement) {
             "  if (expressions) then {};"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -372,6 +406,7 @@ TEST(SyntaxConditionalStatement, AcceptsIfThenElseStatement) {
             "  };"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -381,6 +416,7 @@ TEST(SyntaxInput, AcceptsInput) {
             "  input local_var;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -390,6 +426,7 @@ TEST(SyntaxOutput, AcceptsOutput) {
             "  output local_var;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -399,6 +436,7 @@ TEST(SyntaxOutput, AcceptsOutputMultipleExpressions) {
             "  output local_var, another_one, yet_another;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -408,6 +446,7 @@ TEST(SyntaxFunctionCall, AcceptsFunctionCall) {
             "  f();"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -417,6 +456,7 @@ TEST(SyntaxFunctionCall, AcceptsFunctionCallDotArgument) {
             "  f(.);"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -426,6 +466,7 @@ TEST(SyntaxFunctionCall, AcceptsFunctionCallArgument) {
             "  f(expression);"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -435,6 +476,7 @@ TEST(SyntaxFunctionCall, AcceptsFunctionCallMultipleArguments) {
             "  f(expression, ., another_expression);"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -444,6 +486,7 @@ TEST(SyntaxFunctionCall, AcceptsFunctionForwardPipe) {
             "  f(expression) \%>\% g(.);"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -453,6 +496,7 @@ TEST(SyntaxFunctionCall, AcceptsFunctionBashPipe) {
             "  f(expression) \%|\% g(.);"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -462,6 +506,7 @@ TEST(SyntaxFunctionCall, AcceptsFunctionMultiplePipes) {
             "  f(x) \%>\% g(.) \%|\% h(., z);"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -471,6 +516,7 @@ TEST(SyntaxForeach, AcceptsForeach) {
             "  foreach (id : expression, another_expression) {};"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -480,6 +526,7 @@ TEST(SyntaxFor, AcceptsFor) {
             "  for (i = 0, j = 0 : expression : i = i + 1, j = j + 1) {};"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -489,6 +536,7 @@ TEST(SyntaxWhile, AcceptsWhile) {
             "  while (expression) do {};"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -498,6 +546,7 @@ TEST(SyntaxDoWhile, AcceptsDoWhile) {
             "  do {} while (expression);"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -507,6 +556,7 @@ TEST(SyntaxSwitch, AcceptsSwitch) {
             "  switch (expression) {};"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -517,6 +567,7 @@ TEST(SyntaxCommandBlock, AcceptsCommandBlock) {
             "  {{};};"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -526,6 +577,7 @@ TEST(SyntaxOperand, AcceptsId) {
             "  local_var = id;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -535,6 +587,7 @@ TEST(SyntaxOperand, AcceptsIdArray) {
             "  local_var = id[expression];"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -544,6 +597,7 @@ TEST(SyntaxOperand, AcceptsIdUserType) {
             "  local_var = id$field;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -553,6 +607,7 @@ TEST(SyntaxOperand, AcceptsIdUserTypeArray) {
             "  local_var = id[expression]$field;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -562,6 +617,7 @@ TEST(SyntaxOperand, AcceptsLiteralInt) {
             "  local_var = 12;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -571,6 +627,7 @@ TEST(SyntaxOperand, AcceptsLiteralFloat) {
             "  local_var = 12.23e-1;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -580,6 +637,7 @@ TEST(SyntaxOperand, AcceptsFalse) {
             "  local_var = false;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -589,6 +647,7 @@ TEST(SyntaxOperand, AcceptsTrue) {
             "  local_var = true;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -598,6 +657,7 @@ TEST(SyntaxOperand, AcceptsLiteralChar) {
             "  local_var = 'a';"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -607,6 +667,7 @@ TEST(SyntaxOperand, AcceptsLiteralString) {
             "  local_var = \"a string\";"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -616,6 +677,7 @@ TEST(SyntaxOperand, AcceptsFunctionCall) {
             "  local_var = f();"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -625,6 +687,7 @@ TEST(SyntaxOperand, AcceptsPipeFunctionCall) {
             "  local_var = f() \%>\% g(.) \%|\% h(., z);"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -634,6 +697,7 @@ TEST(SyntaxUnaryOperator, AcceptsMinusOperator) {
             "  local_var = -expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -643,6 +707,7 @@ TEST(SyntaxUnaryOperator, AcceptsNegationOperator) {
             "  local_var = !expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -652,6 +717,7 @@ TEST(SyntaxUnaryOperator, AcceptsPointerOperator) {
             "  local_var = *expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -661,6 +727,7 @@ TEST(SyntaxUnaryOperator, AcceptsAddressOperator) {
             "  local_var = &expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -670,6 +737,7 @@ TEST(SyntaxUnaryOperator, AcceptsEvalOperator) {
             "  local_var = ?expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -679,6 +747,7 @@ TEST(SyntaxUnaryOperator, AcceptsHashOperator) {
             "  local_var = #expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -688,6 +757,7 @@ TEST(SyntaxBinaryOperator, AcceptsSumOperator) {
             "  local_var = expression + expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -697,6 +767,7 @@ TEST(SyntaxBinaryOperator, AcceptsSubtractionOperator) {
             "  local_var = expression - expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -706,6 +777,7 @@ TEST(SyntaxBinaryOperator, AcceptsMultiplicationOperator) {
             "  local_var = expression * expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -715,6 +787,7 @@ TEST(SyntaxBinaryOperator, AcceptsDivisionOperator) {
             "  local_var = expression / expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -724,6 +797,7 @@ TEST(SyntaxBinaryOperator, AcceptsModulusOperator) {
             "  local_var = expression \% expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -733,6 +807,7 @@ TEST(SyntaxBinaryOperator, AcceptsExponentiationOperator) {
             "  local_var = expression ^ expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -742,6 +817,7 @@ TEST(SyntaxBinaryOperator, AcceptsBitwiseOrOperator) {
             "  local_var = expression | expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -751,6 +827,7 @@ TEST(SyntaxBinaryOperator, AcceptsBitwiseAndOperator) {
             "  local_var = expression & expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -760,6 +837,7 @@ TEST(SyntaxBinaryOperator, AcceptsLessThanOperator) {
             "  local_var = expression < expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -769,6 +847,7 @@ TEST(SyntaxBinaryOperator, AcceptsGreaterThanOperator) {
             "  local_var = expression > expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -778,6 +857,7 @@ TEST(SyntaxBinaryOperator, AcceptsEqualOperator) {
             "  local_var = expression == expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -787,6 +867,7 @@ TEST(SyntaxBinaryOperator, AcceptsNotEqualOperator) {
             "  local_var = expression != expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -796,6 +877,7 @@ TEST(SyntaxBinaryOperator, AcceptsGreaterOrEqualThanOperator) {
             "  local_var = expression >= expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -805,6 +887,7 @@ TEST(SyntaxBinaryOperator, AcceptsLessOrEqualThanOperator) {
             "  local_var = expression <= expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -814,6 +897,7 @@ TEST(SyntaxBinaryOperator, AcceptsAndOperator) {
             "  local_var = expression && expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -823,6 +907,7 @@ TEST(SyntaxBinaryOperator, AcceptsOrOperator) {
             "  local_var = expression || expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -832,6 +917,7 @@ TEST(SyntaxTernaryOperator, AcceptsTernaryOperator) {
             "  local_var = expression ? expression : expression;"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -841,6 +927,7 @@ TEST(SyntaxExpression, AcceptsSingleExpression) {
             "  local_var = (expression);"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }
 
@@ -850,5 +937,6 @@ TEST(SyntaxExpression, AcceptsCompoundExpression) {
             "  local_var = (expression + -(expression));"
             "}");
     EXPECT_EQ(0, yyparse());
+    libera(arvore);
     yylex_destroy();
 }

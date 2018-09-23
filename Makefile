@@ -12,7 +12,7 @@ TEST_OBJ := $(TESTS:$(TEST_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 SOURCES := $(addprefix $(SOURCE_DIR)/, node.c lex.yy.c parser.tab.c)
 OBJECTS := $(SOURCES:$(SOURCE_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-TARGET = etapa2
+TARGET = etapa3
 
 .PHONY: all test yy dir clean
 
@@ -28,7 +28,7 @@ test: dir yy $(OBJECTS) $(TEST_OBJ)
 
 yy:
 	flex -o src/lex.yy.c --header-file=include/lex.yy.h scanner.l
-	bison -v -Wall -o src/parser.tab.c --defines=include/parser.tab.h parser.y
+	bison -Wall -o src/parser.tab.c --defines=include/parser.tab.h parser.y
 
 $(OBJECTS): $(OBJ_DIR)/%.o : $(SOURCE_DIR)/%.c
 	gcc -g -Wall -c $< -o $@
@@ -40,4 +40,4 @@ dir:
 	mkdir -p obj include src
 
 clean:
-	rm -fr etapa2 run_test */lex.yy.* */parser.tab.* obj
+	rm -fr etapa3 run_test */lex.yy.* */parser.tab.* obj
