@@ -13,9 +13,13 @@ void libera(void *arvore);
 
 int main() {
     int ret = yyparse();
-    descompila(arvore);
-    libera(arvore);
+
+    if (ret == 0) {
+        descompila(arvore);
+        libera(arvore);
+    }
+
     arvore = 0;
     yylex_destroy();
-    return ret;
+    return 0;
 }

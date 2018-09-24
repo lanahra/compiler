@@ -677,7 +677,7 @@ void decompile_node(struct node* node) {
             case N_IF:
                 printf("if (");
                 decompile_node(node->val.if_cmd.condition);
-                printf(") ");
+                printf(") then ");
 
                 if (node->val.if_cmd.then_cmd_block != 0) {
                     decompile_node(node->val.if_cmd.then_cmd_block);

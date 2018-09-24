@@ -1,13 +1,15 @@
 %{
+#include <stdbool.h>
 #include <stdio.h>
 #include "../include/lex.yy.h"
+
+bool is_invalid = false;
+extern void *arvore;
 
 int yylex();
 void yyerror(char const *s);
 extern int get_line_number();
 extern int get_column_number();
-
-extern void *arvore;
 %}
 
 %code requires {
@@ -151,11 +153,14 @@ extern void *arvore;
 
 %start program
 
+%destructor { if (is_invalid) { free_node($$); } else { arvore = $$; } } program
+%destructor { free_node($$); } <node>
+%destructor { free($$); $$ = 0; } <token.val.string_v>
 %%
 
 program
     : %empty { $$ = 0; }
-    | unit { $$ = $1; arvore = $1; }
+    | unit { $$ = $1; }
     ;
 
 unit
@@ -529,6 +534,7 @@ operand
 %%
 
 void yyerror(char const *s) {
+    is_invalid = true;
     char error[] = "Unexpected token: %s at line %d column %d\n";
     fprintf(stderr, error, yytext, get_line_number(), get_column_number());
 }
