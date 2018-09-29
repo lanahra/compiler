@@ -37,7 +37,7 @@ $(TEST_OBJ): $(OBJ_DIR)/%.o: $(TEST_DIR)/%.cpp
 	g++ -g -Wall $(TEST_INCLUDE) -c $< -o $@
 
 dir:
-	mkdir -p obj include src
+	mkdir -p obj
 
 clean:
 	rm -fr etapa3 run_test */lex.yy.* */parser.tab.* obj

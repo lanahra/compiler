@@ -1,25 +1,16 @@
-/*
-Função principal para realização da E3.
-
-Este arquivo não pode ser modificado.
-*/
 #include <stdio.h>
 #include "include/lex.yy.h"
-#include "include/parser.tab.h"  //arquivo gerado com bison -d parser.y
+#include "include/parser.tab.h"
 
 void *arvore = 0;
 void descompila(void *arvore);
 void libera(void *arvore);
 
 int main() {
-    int ret = yyparse();
-
-    if (ret == 0) {
-        descompila(arvore);
-        libera(arvore);
-    }
-
+    int status = yyparse();
+    descompila(arvore);
+    libera(arvore);
     arvore = 0;
     yylex_destroy();
-    return 0;
+    return status;
 }
