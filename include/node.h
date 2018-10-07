@@ -51,6 +51,13 @@ union literal {
     bool bool_v;
 };
 
+struct token {
+    int line;
+    int column;
+    int type;
+    union literal val;
+};
+
 struct unary_exp {
     int op;
     struct node* operand;
