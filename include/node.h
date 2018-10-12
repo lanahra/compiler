@@ -34,10 +34,8 @@ enum node_type {
     N_CMD_BLOCK,
     N_HIGH_LIST,
     N_PARAM,
-    N_PARAM_LIST,
     N_FUNCTION_DEF,
     N_FIELD,
-    N_FIELD_LIST,
     N_CLASS_DEF,
     N_GLOBAL_VAR_DECL,
     N_UNIT
@@ -199,11 +197,7 @@ struct parameter {
     bool is_const;
     struct type type;
     struct token token;
-};
-
-struct param_list {
-    struct node* param_list;
-    struct node* param;
+    struct node* next;
 };
 
 struct function_def {
@@ -220,11 +214,7 @@ struct field {
     enum access_modifier access;
     struct type type;
     struct token token;
-};
-
-struct field_list {
-    struct node* field_list;
-    struct node* field;
+    struct node* next;
 };
 
 struct class_def {
@@ -271,10 +261,8 @@ union node_value {
     struct high_list high_list;
     struct cmd_block cmd_block;
     struct parameter parameter;
-    struct param_list param_list;
     struct function_def function_def;
     struct field field;
-    struct field_list field_list;
     struct class_def class_def;
     struct global_var_decl global_var_decl;
     struct unit unit;
@@ -349,7 +337,6 @@ struct node* make_function_def(bool is_static,
 struct node* make_field(enum access_modifier access,
                         struct type type,
                         struct token token);
-struct node* make_field_list(struct node* field_list, struct node* field);
 struct node* make_class_def(struct token token, struct node* field_list);
 struct node* make_global_var_decl(struct token token,
                                   int size,

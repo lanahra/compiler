@@ -227,7 +227,7 @@ class_definition
 
 field_list
     : field
-    | field_list ':' field { $$ = make_field_list($1, $3); }
+    | field ':' field_list { $1->val.field.next = $3; $$ = $1; } 
     ;
 
 field
@@ -258,7 +258,7 @@ parameters
 
 parameter_list
     : parameter
-    | parameter_list ',' parameter { $$ = make_param_list($1, $3); }
+    | parameter ',' parameter_list { $1->val.parameter.next = $3; $$ = $1; }
     ;
 
 parameter

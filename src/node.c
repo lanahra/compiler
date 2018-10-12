@@ -282,13 +282,8 @@ struct node* make_parameter(bool is_const,
     node->val.parameter.is_const = is_const;
     node->val.parameter.type = type;
     node->val.parameter.token = token;
-    return node;
-}
+    node->val.parameter.next = 0;
 
-struct node* make_param_list(struct node* param_list, struct node* param) {
-    struct node* node = alloc_node(N_PARAM_LIST);
-    node->val.param_list.param_list = param_list;
-    node->val.param_list.param = param;
     return node;
 }
 
@@ -313,13 +308,7 @@ struct node* make_field(enum access_modifier access,
     node->val.field.access = access;
     node->val.field.type = type;
     node->val.field.token = token;
-    return node;
-}
-
-struct node* make_field_list(struct node* field_list, struct node* field) {
-    struct node* node = alloc_node(N_FIELD_LIST);
-    node->val.field_list.field_list = field_list;
-    node->val.field_list.field = field;
+    node->val.field.next = 0;
     return node;
 }
 
@@ -452,14 +441,13 @@ void free_node(struct node* node) {
                 free_node(node->val.cmd_block.high_list);
                 break;
             case N_PARAM:
+                if (node->val.parameter.next != 0) {
+                    free_node(node->val.parameter.next);
+                }
                 if (node->val.parameter.type.key == CUSTOM) {
                     free(node->val.parameter.type.val.custom);
-                };
+                }
                 free(node->val.parameter.token.val.string_v);
-                break;
-            case N_PARAM_LIST:
-                free_node(node->val.param_list.param_list);
-                free_node(node->val.param_list.param);
                 break;
             case N_FUNCTION_DEF:
                 if (node->val.function_def.type.key == CUSTOM) {
@@ -470,14 +458,13 @@ void free_node(struct node* node) {
                 free_node(node->val.function_def.cmd_block);
                 break;
             case N_FIELD:
+                if (node->val.field.next != 0) {
+                    free_node(node->val.field.next);
+                }
                 if (node->val.field.type.key == CUSTOM) {
                     free(node->val.field.type.val.custom);
                 };
                 free(node->val.field.token.val.string_v);
-                break;
-            case N_FIELD_LIST:
-                free_node(node->val.field_list.field_list);
-                free_node(node->val.field_list.field);
                 break;
             case N_CLASS_DEF:
                 free(node->val.class_def.token.val.string_v);
@@ -792,11 +779,10 @@ void decompile_node(struct node* node) {
 
                 decompile_type(node->val.parameter.type);
                 printf(" %s", node->val.parameter.token.val.string_v);
-                break;
-            case N_PARAM_LIST:
-                decompile_node(node->val.param_list.param_list);
-                printf(", ");
-                decompile_node(node->val.param_list.param);
+                if (node->val.parameter.next != 0) {
+                    printf(", ");
+                    decompile_node(node->val.parameter.next);
+                }
                 break;
             case N_FUNCTION_DEF:
                 if (node->val.function_def.is_static) {
@@ -829,11 +815,11 @@ void decompile_node(struct node* node) {
 
                 decompile_type(node->val.field.type);
                 printf(" %s", node->val.field.token.val.string_v);
-                break;
-            case N_FIELD_LIST:
-                decompile_node(node->val.field_list.field_list);
-                printf(" : ");
-                decompile_node(node->val.field_list.field);
+
+                if (node->val.field.next != 0) {
+                    printf(" : ");
+                    decompile_node(node->val.field.next);
+                }
                 break;
             case N_CLASS_DEF:
                 printf("class %s[ ", node->val.class_def.token.val.string_v);
