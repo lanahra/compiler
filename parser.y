@@ -170,13 +170,13 @@ element
 
 global_var_declaration
     : ID primitive_type_specifier {
-        $$ = make_global_var_decl($1.val.string_v, -1, false, make_primitive($2)); }
+        $$ = make_global_var_decl($1, -1, false, make_primitive($2)); }
     | ID ID {
-        $$ = make_global_var_decl($1.val.string_v, -1, false, make_custom($2.val.string_v)); }
+        $$ = make_global_var_decl($1, -1, false, make_custom($2.val.string_v)); }
     | ID array static_modifier type_specifier {
-        $$ = make_global_var_decl($1.val.string_v, $2, $3, $4); }
+        $$ = make_global_var_decl($1, $2, $3, $4); }
     | ID STATIC type_specifier {
-        $$ = make_global_var_decl($1.val.string_v, -1, true, $3); }
+        $$ = make_global_var_decl($1, -1, true, $3); }
     ;
 
 array
@@ -222,7 +222,7 @@ type_specifier
     ;
 
 class_definition
-    : CLASS ID '[' field_list ']' { $$ = make_class_def($2.val.string_v, $4); }
+    : CLASS ID '[' field_list ']' { $$ = make_class_def($2, $4); }
     ;
 
 field_list
@@ -232,7 +232,7 @@ field_list
 
 field
     : access_modifier primitive_type_specifier ID {
-        $$ = make_field($1, make_primitive($2), $3.val.string_v); }
+        $$ = make_field($1, make_primitive($2), $3); }
     ;
 
 access_modifier
@@ -244,11 +244,11 @@ access_modifier
 
 function_definition
     : primitive_type_specifier ID parameters command_block {
-        $$ = make_function_def(false, make_primitive($1), $2.val.string_v, $3, $4); }
+        $$ = make_function_def(false, make_primitive($1), $2, $3, $4); }
     | ID ID parameters command_block {
-        $$ = make_function_def(false, make_custom($1.val.string_v), $2.val.string_v, $3, $4); }
+        $$ = make_function_def(false, make_custom($1.val.string_v), $2, $3, $4); }
     | STATIC type_specifier ID parameters command_block {
-        $$ = make_function_def(true, $2, $3.val.string_v, $4, $5); }
+        $$ = make_function_def(true, $2, $3, $4, $5); }
     ;
 
 parameters
@@ -263,7 +263,7 @@ parameter_list
 
 parameter
     : const_modifier type_specifier ID {
-        $$ = make_parameter($1, $2, $3.val.string_v); }
+        $$ = make_parameter($1, $2, $3); }
     ;
 
 command_block
@@ -318,7 +318,7 @@ modifier_local_var_declaration
 
 primitive_var_declaration
     : primitive_type_specifier ID local_var_initialization {
-        $$ = make_var_decl($1, $2.val.string_v, $3); }
+        $$ = make_var_decl($1, $2, $3); }
     ;
 
 local_var_initialization
@@ -332,7 +332,7 @@ local_var_initializer
     ;
 
 class_var_declaration
-    : ID ID { $$ = make_class_var_decl($1.val.string_v, $2.val.string_v); }
+    : ID ID { $$ = make_class_var_decl($1.val.string_v, $2); }
     ;
 
 variable_attribution
@@ -340,10 +340,10 @@ variable_attribution
     ;
 
 variable
-    : ID { $$ = make_var($1.val.string_v, 0, 0); }
-    | ID '$' ID { $$ = make_var($1.val.string_v, $3.val.string_v, 0); }
-    | ID '[' expression ']' { $$ = make_var($1.val.string_v, 0, $3); }
-    | ID '[' expression ']' '$' ID { $$ = make_var($1.val.string_v, $6.val.string_v, $3); }
+    : ID { $$ = make_var($1, 0, 0); }
+    | ID '$' ID { $$ = make_var($1, $3.val.string_v, 0); }
+    | ID '[' expression ']' { $$ = make_var($1, 0, $3); }
+    | ID '[' expression ']' '$' ID { $$ = make_var($1, $6.val.string_v, $3); }
     ;
 
 shift
@@ -386,7 +386,7 @@ function_call
     ;
 
 function
-    : ID '(' argument_list ')' { $$ = make_function_cmd($1.val.string_v, $3); }
+    : ID '(' argument_list ')' { $$ = make_function_cmd($1, $3); }
     ;
 
 pipe

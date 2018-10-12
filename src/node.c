@@ -125,9 +125,9 @@ struct node* make_arg_list(struct node* arg_list, struct node* arg) {
     return node;
 }
 
-struct node* make_function_cmd(char* name, struct node* arg_list) {
+struct node* make_function_cmd(struct token token, struct node* arg_list) {
     struct node* node = alloc_node(N_FUNCTION);
-    node->val.function_cmd.name = name;
+    node->val.function_cmd.token = token;
     node->val.function_cmd.arg_list = arg_list;
     return node;
 }
@@ -194,11 +194,11 @@ struct node* make_continue_cmd() {
     return node;
 }
 
-struct node* make_var(char* name,
+struct node* make_var(struct token token,
                       char* field_access,
                       struct node* array_access) {
     struct node* node = alloc_node(N_VAR);
-    node->val.var.name = name;
+    node->val.var.token = token;
     node->val.var.field_access = field_access;
     node->val.var.array_access = array_access;
     return node;
@@ -211,24 +211,24 @@ struct node* make_attr_cmd(struct node* var, struct node* exp) {
     return node;
 }
 
-struct node* make_class_var_decl(char* type, char* name) {
+struct node* make_class_var_decl(char* type, struct token token) {
     struct node* node = alloc_node(N_LOCAL_VAR_DECL);
     node->val.local_var_decl.is_static = false;
     node->val.local_var_decl.is_const = false;
     node->val.local_var_decl.type.key = CUSTOM;
     node->val.local_var_decl.type.val.custom = type;
-    node->val.local_var_decl.name = name;
+    node->val.local_var_decl.token = token;
     node->val.local_var_decl.init = 0;
     return node;
 }
 
-struct node* make_var_decl(int type, char* name, struct node* init) {
+struct node* make_var_decl(int type, struct token token, struct node* init) {
     struct node* node = alloc_node(N_LOCAL_VAR_DECL);
     node->val.local_var_decl.is_static = false;
     node->val.local_var_decl.is_const = false;
     node->val.local_var_decl.type.key = PRIMITIVE;
     node->val.local_var_decl.type.val.primitive = type;
-    node->val.local_var_decl.name = name;
+    node->val.local_var_decl.token = token;
     node->val.local_var_decl.init = init;
     return node;
 }
@@ -275,11 +275,13 @@ struct type make_custom(char* type) {
     return type_t;
 }
 
-struct node* make_parameter(bool is_const, struct type type, char* name) {
+struct node* make_parameter(bool is_const,
+                            struct type type,
+                            struct token token) {
     struct node* node = alloc_node(N_PARAM);
     node->val.parameter.is_const = is_const;
     node->val.parameter.type = type;
-    node->val.parameter.name = name;
+    node->val.parameter.token = token;
     return node;
 }
 
@@ -292,13 +294,13 @@ struct node* make_param_list(struct node* param_list, struct node* param) {
 
 struct node* make_function_def(bool is_static,
                                struct type type,
-                               char* name,
+                               struct token token,
                                struct node* params,
                                struct node* cmd_block) {
     struct node* node = alloc_node(N_FUNCTION_DEF);
     node->val.function_def.is_static = is_static;
     node->val.function_def.type = type;
-    node->val.function_def.name = name;
+    node->val.function_def.token = token;
     node->val.function_def.params = params;
     node->val.function_def.cmd_block = cmd_block;
     return node;
@@ -306,11 +308,11 @@ struct node* make_function_def(bool is_static,
 
 struct node* make_field(enum access_modifier access,
                         struct type type,
-                        char* name) {
+                        struct token token) {
     struct node* node = alloc_node(N_FIELD);
     node->val.field.access = access;
     node->val.field.type = type;
-    node->val.field.name = name;
+    node->val.field.token = token;
     return node;
 }
 
@@ -321,19 +323,19 @@ struct node* make_field_list(struct node* field_list, struct node* field) {
     return node;
 }
 
-struct node* make_class_def(char* name, struct node* field_list) {
+struct node* make_class_def(struct token token, struct node* field_list) {
     struct node* node = alloc_node(N_CLASS_DEF);
-    node->val.class_def.name = name;
+    node->val.class_def.token = token;
     node->val.class_def.field_list = field_list;
     return node;
 }
 
-struct node* make_global_var_decl(char* name,
+struct node* make_global_var_decl(struct token token,
                                   int size,
                                   bool is_static,
                                   struct type type) {
     struct node* node = alloc_node(N_GLOBAL_VAR_DECL);
-    node->val.global_var_decl.name = name;
+    node->val.global_var_decl.token = token;
     node->val.global_var_decl.size = size;
     node->val.global_var_decl.is_static = is_static;
     node->val.global_var_decl.type = type;
@@ -397,7 +399,7 @@ void free_node(struct node* node) {
                 free_node(node->val.arg_list.arg);
                 break;
             case N_FUNCTION:
-                free(node->val.function_cmd.name);
+                free(node->val.function_cmd.token.val.string_v);
                 free_node(node->val.function_cmd.arg_list);
                 break;
             case N_PIPE:
@@ -423,7 +425,7 @@ void free_node(struct node* node) {
                 free_node(node->val.shift_cmd.exp);
                 break;
             case N_VAR:
-                free(node->val.var.name);
+                free(node->val.var.token.val.string_v);
                 free(node->val.var.field_access);
                 free_node(node->val.var.array_access);
                 break;
@@ -435,7 +437,7 @@ void free_node(struct node* node) {
                 if (node->val.local_var_decl.type.key == CUSTOM) {
                     free(node->val.local_var_decl.type.val.custom);
                 };
-                free(node->val.local_var_decl.name);
+                free(node->val.local_var_decl.token.val.string_v);
                 free_node(node->val.local_var_decl.init);
                 break;
             case N_CMD_LIST:
@@ -453,7 +455,7 @@ void free_node(struct node* node) {
                 if (node->val.parameter.type.key == CUSTOM) {
                     free(node->val.parameter.type.val.custom);
                 };
-                free(node->val.parameter.name);
+                free(node->val.parameter.token.val.string_v);
                 break;
             case N_PARAM_LIST:
                 free_node(node->val.param_list.param_list);
@@ -463,7 +465,7 @@ void free_node(struct node* node) {
                 if (node->val.function_def.type.key == CUSTOM) {
                     free(node->val.function_def.type.val.custom);
                 };
-                free(node->val.function_def.name);
+                free(node->val.function_def.token.val.string_v);
                 free_node(node->val.function_def.params);
                 free_node(node->val.function_def.cmd_block);
                 break;
@@ -471,18 +473,18 @@ void free_node(struct node* node) {
                 if (node->val.field.type.key == CUSTOM) {
                     free(node->val.field.type.val.custom);
                 };
-                free(node->val.field.name);
+                free(node->val.field.token.val.string_v);
                 break;
             case N_FIELD_LIST:
                 free_node(node->val.field_list.field_list);
                 free_node(node->val.field_list.field);
                 break;
             case N_CLASS_DEF:
-                free(node->val.class_def.name);
+                free(node->val.class_def.token.val.string_v);
                 free_node(node->val.class_def.field_list);
                 break;
             case N_GLOBAL_VAR_DECL:
-                free(node->val.global_var_decl.name);
+                free(node->val.global_var_decl.token.val.string_v);
 
                 if (node->val.global_var_decl.type.key == CUSTOM) {
                     free(node->val.global_var_decl.type.val.custom);
@@ -538,10 +540,10 @@ void decompile_node(struct node* node) {
                 printf("%f", node->val.literal.float_v);
                 break;
             case N_CHAR_LITERAL:
-                printf("%c", node->val.literal.char_v);
+                printf("'%c'", node->val.literal.char_v);
                 break;
             case N_STRING_LITERAL:
-                printf("%s", node->val.literal.string_v);
+                printf("\"%s\"", node->val.literal.string_v);
                 break;
             case N_BOOL_LITERAL:
                 printf(node->val.literal.bool_v ? "true" : "false");
@@ -656,7 +658,7 @@ void decompile_node(struct node* node) {
                 decompile_node(node->val.arg_list.arg);
                 break;
             case N_FUNCTION:
-                printf("%s(", node->val.function_cmd.name);
+                printf("%s(", node->val.function_cmd.token.val.string_v);
                 decompile_node(node->val.function_cmd.arg_list);
                 printf(")");
                 break;
@@ -726,7 +728,7 @@ void decompile_node(struct node* node) {
                 printf("continue");
                 break;
             case N_VAR:
-                printf("%s", node->val.var.name);
+                printf("%s", node->val.var.token.val.string_v);
 
                 if (node->val.var.array_access) {
                     printf("[");
@@ -754,7 +756,7 @@ void decompile_node(struct node* node) {
                 }
 
                 decompile_type(node->val.local_var_decl.type);
-                printf(" %s", node->val.local_var_decl.name);
+                printf(" %s", node->val.local_var_decl.token.val.string_v);
 
                 if (node->val.local_var_decl.init != 0) {
                     printf(" <= ");
@@ -789,7 +791,7 @@ void decompile_node(struct node* node) {
                 }
 
                 decompile_type(node->val.parameter.type);
-                printf(" %s", node->val.parameter.name);
+                printf(" %s", node->val.parameter.token.val.string_v);
                 break;
             case N_PARAM_LIST:
                 decompile_node(node->val.param_list.param_list);
@@ -802,7 +804,7 @@ void decompile_node(struct node* node) {
                 }
 
                 decompile_type(node->val.function_def.type);
-                printf(" %s (", node->val.function_def.name);
+                printf(" %s (", node->val.function_def.token.val.string_v);
                 decompile_node(node->val.function_def.params);
                 printf(") ");
 
@@ -826,7 +828,7 @@ void decompile_node(struct node* node) {
                 }
 
                 decompile_type(node->val.field.type);
-                printf(" %s", node->val.field.name);
+                printf(" %s", node->val.field.token.val.string_v);
                 break;
             case N_FIELD_LIST:
                 decompile_node(node->val.field_list.field_list);
@@ -834,12 +836,12 @@ void decompile_node(struct node* node) {
                 decompile_node(node->val.field_list.field);
                 break;
             case N_CLASS_DEF:
-                printf("class %s[ ", node->val.class_def.name);
+                printf("class %s[ ", node->val.class_def.token.val.string_v);
                 decompile_node(node->val.class_def.field_list);
                 printf(" ];\n");
                 break;
             case N_GLOBAL_VAR_DECL:
-                printf("%s", node->val.global_var_decl.name);
+                printf("%s", node->val.global_var_decl.token.val.string_v);
 
                 if (node->val.global_var_decl.size >= 0) {
                     printf("[%d]", node->val.global_var_decl.size);

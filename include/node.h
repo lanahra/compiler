@@ -114,7 +114,7 @@ struct arg_list {
 };
 
 struct function_cmd {
-    char* name;
+    struct token token;
     struct node* arg_list;
 };
 
@@ -153,7 +153,7 @@ struct shift_cmd {
 };
 
 struct var {
-    char* name;
+    struct token token;
     char* field_access;
     struct node* array_access;
 };
@@ -177,7 +177,7 @@ struct local_var_decl {
     bool is_static;
     bool is_const;
     struct type type;
-    char* name;
+    struct token token;
     struct node* init;
 };
 
@@ -198,7 +198,7 @@ struct cmd_block {
 struct parameter {
     bool is_const;
     struct type type;
-    char* name;
+    struct token token;
 };
 
 struct param_list {
@@ -209,7 +209,7 @@ struct param_list {
 struct function_def {
     bool is_static;
     struct type type;
-    char* name;
+    struct token token;
     struct node* params;
     struct node* cmd_block;
 };
@@ -219,7 +219,7 @@ enum access_modifier { NONE, PRIV, PUB, PROT };
 struct field {
     enum access_modifier access;
     struct type type;
-    char* name;
+    struct token token;
 };
 
 struct field_list {
@@ -228,12 +228,12 @@ struct field_list {
 };
 
 struct class_def {
-    char* name;
+    struct token token;
     struct node* field_list;
 };
 
 struct global_var_decl {
-    char* name;
+    struct token token;
     int size;
     bool is_static;
     struct type type;
@@ -309,7 +309,7 @@ struct node* make_foreach_cmd(char* item,
                               struct node* cmd_block);
 struct node* make_dot_arg();
 struct node* make_arg_list(struct node* arg_list, struct node* arg);
-struct node* make_function_cmd(char* name, struct node* arg_list);
+struct node* make_function_cmd(struct token token, struct node* arg_list);
 struct node* make_pipe_cmd(struct node* pipe_cmd,
                            int pipe_op,
                            struct node* function_cmd);
@@ -323,12 +323,12 @@ struct node* make_return_cmd(struct node* exp);
 struct node* make_shift_cmd(struct node* var, int shift_op, struct node* exp);
 struct node* make_break_cmd();
 struct node* make_continue_cmd();
-struct node* make_var(char* name,
+struct node* make_var(struct token token,
                       char* field_access,
                       struct node* array_access);
 struct node* make_attr_cmd(struct node* var, struct node* exp);
-struct node* make_class_var_decl(char* type, char* name);
-struct node* make_var_decl(int type, char* name, struct node* init);
+struct node* make_class_var_decl(char* type, struct token token);
+struct node* make_var_decl(int type, struct token token, struct node* init);
 struct node* add_decl_modifier(bool is_static,
                                bool is_const,
                                struct node* decl);
@@ -337,19 +337,21 @@ struct node* make_high_list(struct node* high_list, struct node* cmd);
 struct node* make_cmd_block(struct node* high_list);
 struct type make_primitive(int type);
 struct type make_custom(char* type);
-struct node* make_parameter(bool is_const, struct type type, char* name);
+struct node* make_parameter(bool is_const,
+                            struct type type,
+                            struct token token);
 struct node* make_param_list(struct node* param_list, struct node* param);
 struct node* make_function_def(bool is_static,
                                struct type type,
-                               char* name,
+                               struct token token,
                                struct node* params,
                                struct node* cmd_block);
 struct node* make_field(enum access_modifier access,
                         struct type type,
-                        char* name);
+                        struct token token);
 struct node* make_field_list(struct node* field_list, struct node* field);
-struct node* make_class_def(char* name, struct node* field_list);
-struct node* make_global_var_decl(char* name,
+struct node* make_class_def(struct token token, struct node* field_list);
+struct node* make_global_var_decl(struct token token,
                                   int size,
                                   bool is_static,
                                   struct type type);
