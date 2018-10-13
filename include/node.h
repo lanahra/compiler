@@ -1,3 +1,5 @@
+#ifndef NODE_H
+#define NODE_H
 #include <stdbool.h>
 
 enum node_type {
@@ -40,6 +42,8 @@ enum node_type {
     N_GLOBAL_VAR_DECL,
     N_UNIT
 };
+
+extern const char* type_name[];
 
 union literal {
     int int_v;
@@ -346,3 +350,5 @@ struct node* make_unit(struct node* unit, struct node* element);
 
 void free_node(struct node* node);
 void decompile_node(struct node* node);
+
+#endif

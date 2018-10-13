@@ -9,7 +9,7 @@ TEST_LD_FLAGS = -L/usr/local/lib -lfl -lgtest -lpthread
 TESTS := $(wildcard $(TEST_DIR)/*.cpp)
 TEST_OBJ := $(TESTS:$(TEST_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-SOURCES := $(addprefix $(SOURCE_DIR)/, node.c lex.yy.c parser.tab.c)
+SOURCES := $(addprefix $(SOURCE_DIR)/, node.c analyze.c lex.yy.c parser.tab.c)
 OBJECTS := $(SOURCES:$(SOURCE_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 TARGET = etapa3
@@ -19,7 +19,7 @@ TARGET = etapa3
 all: dir $(TARGET)
 
 $(TARGET): yy $(OBJECTS)
-	gcc -Wall main.c $(OBJECTS) -lfl -o $@
+	gcc -g -Wall main.c $(OBJECTS) -lfl -o $@
 
 test: dir yy $(OBJECTS) $(TEST_OBJ)
 	g++ -g -Wall -o run_test $(OBJECTS) $(TEST_OBJ) $(TEST_LD_FLAGS)

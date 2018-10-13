@@ -1,16 +1,30 @@
 #include <stdio.h>
+#include "include/analyze.h"
 #include "include/lex.yy.h"
 #include "include/parser.tab.h"
 
-void *arvore = 0;
-void descompila(void *arvore);
-void libera(void *arvore);
+int main(int argc, char** argv) {
+    (void)argc;
+    (void)argv;
 
-int main() {
-    int status = yyparse();
-    descompila(arvore);
-    libera(arvore);
-    arvore = 0;
+    struct node* node = 0;
+    int status = yyparse(&node);
+
+    if (status != 0) {
+        free_node(node);
+        yylex_destroy();
+        exit(status);
+    }
+
+    decompile_node(node);
+
+    struct table* table = alloc_table();
+    enum analyze_result result = analyze_node(node, table);
+    printf("%d\n", result);
+
+    free_table(table);
+    free_node(node);
     yylex_destroy();
-    return status;
+
+    return result;
 }

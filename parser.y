@@ -2,12 +2,13 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "../include/lex.yy.h"
+#include "../include/node.h"
 
 bool is_invalid = false;
-extern void *arvore;
+extern void *tree;
 
 int yylex();
-void yyerror(char const *s);
+void yyerror(struct node** node, char const *s);
 extern int get_line_number();
 extern int get_column_number();
 %}
@@ -148,7 +149,9 @@ extern int get_column_number();
 
 %start program
 
-%destructor { if (is_invalid) { free_node($$); } else { arvore = $$; } } program
+%parse-param { struct node** node }
+
+%destructor { if (is_invalid) { free_node($$); } else { *node = $$; } } program
 %destructor { free_node($$); } <node>
 %%
 
@@ -227,7 +230,7 @@ class_definition
 
 field_list
     : field
-    | field ':' field_list { $1->val.field.next = $3; $$ = $1; } 
+    | field ':' field_list { $1->val.field.next = $3; $$ = $1; }
     ;
 
 field
@@ -529,16 +532,10 @@ operand
 
 %%
 
-void yyerror(char const *s) {
+void yyerror(struct node** node, char const *s) {
+    (void)node;
+
     is_invalid = true;
     char error[] = "Unexpected token: %s at line %d column %d\n";
     fprintf(stderr, error, yytext, get_line_number(), get_column_number());
-}
-
-void descompila(void *arvore) {
-    decompile_node((struct node*) arvore);
-}
-
-void libera(void *arvore) {
-    free_node((struct node*) arvore);
 }

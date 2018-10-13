@@ -2,6 +2,45 @@
 #include <stdlib.h>
 #include "../include/parser.tab.h"
 
+const char* type_name[] = {[N_INT_LITERAL] = "N_INT_LITERAL",
+                           [N_FLOAT_LITERAL] = "N_FLOAT_LITERAL",
+                           [N_CHAR_LITERAL] = "N_CHAR_LITERAL",
+                           [N_STRING_LITERAL] = "N_STRING_LITERAL",
+                           [N_BOOL_LITERAL] = "N_BOOL_LITERAL",
+                           [N_UNARY_EXP] = "N_UNARY_EXP",
+                           [N_BINARY_EXP] = "N_BINARY_EXP",
+                           [N_TERNARY_EXP] = "N_TERNARY_EXP",
+                           [N_EXP_LIST] = "N_EXP_LIST",
+                           [N_SWITCH] = "N_SWITCH",
+                           [N_DO_WHILE] = "N_DO_WHILE",
+                           [N_WHILE] = "N_WHILE",
+                           [N_FOR] = "N_FOR",
+                           [N_FOREACH] = "N_FOREACH",
+                           [N_DOT_ARG] = "N_DOT_ARG",
+                           [N_ARG_LIST] = "N_ARG_LIST",
+                           [N_FUNCTION] = "N_FUNCTION",
+                           [N_PIPE] = "N_PIPE",
+                           [N_IF] = "N_IF",
+                           [N_OUTPUT] = "N_OUTPUT",
+                           [N_INPUT] = "N_INPUT",
+                           [N_CASE] = "N_CASE",
+                           [N_RETURN] = "N_RETURN",
+                           [N_SHIFT] = "N_SHIFT",
+                           [N_BREAK] = "N_BREAK",
+                           [N_CONTINUE] = "N_CONTINUE",
+                           [N_VAR] = "N_VAR",
+                           [N_ATTRIBUTION] = "N_ATTRIBUTION",
+                           [N_LOCAL_VAR_DECL] = "N_LOCAL_VAR_DECL",
+                           [N_CMD_LIST] = "N_CMD_LIST",
+                           [N_CMD_BLOCK] = "N_CMD_BLOCK",
+                           [N_HIGH_LIST] = "N_HIGH_LIST",
+                           [N_PARAM] = "N_PARAM",
+                           [N_FUNCTION_DEF] = "N_FUNCTION_DEF",
+                           [N_FIELD] = "N_FIELD",
+                           [N_CLASS_DEF] = "N_CLASS_DEF",
+                           [N_GLOBAL_VAR_DECL] = "N_GLOBAL_VAR_DECL",
+                           [N_UNIT] = "N_UNIT"};
+
 struct node* alloc_node(enum node_type type) {
     struct node* node = malloc(sizeof *node);
     node->type = type;
