@@ -17,13 +17,6 @@ struct table* alloc_table() {
 void free_symbol(struct symbol* symbol) {
     if (symbol != 0) {
         free_symbol(symbol->next);
-
-        switch (symbol->type) {
-            case SYMBOL_CLASS_DEF:
-                break;
-            case SYMBOL_GLOBAL_VAR_DECL:
-                break;
-        }
     }
 
     free(symbol);
@@ -40,6 +33,20 @@ bool is_declared(char* id, struct table* table) {
     while (symbol != 0) {
         if (strcmp(id, symbol->id) == 0) {
             return true;
+        }
+
+        symbol = symbol->next;
+    }
+
+    return false;
+}
+
+bool is_type_defined(char* id, struct table* table) {
+    struct symbol* symbol = table->head;
+
+    while (symbol != 0) {
+        if (strcmp(id, symbol->id) == 0) {
+            return symbol->type == SYMBOL_CLASS_DEF ? true : false;
         }
 
         symbol = symbol->next;
@@ -121,6 +128,7 @@ enum analyze_result analyze_node(struct node* node, struct table* table) {
             case N_PARAM:
                 break;
             case N_FUNCTION_DEF:
+                result = define_function(node->val.function_def, table);
                 break;
             case N_FIELD:
                 break;
@@ -157,7 +165,7 @@ enum analyze_result define_class(struct class_def class_def,
     struct symbol* symbol = malloc(sizeof *symbol);
     symbol->id = class_def.token.val.string_v;
     symbol->type = SYMBOL_CLASS_DEF;
-    symbol->data.fields_head = class_def.field_list;
+    symbol->data.class_def = class_def;
     symbol->is_new_context = false;
 
     symbol->next = table->head;
@@ -179,7 +187,7 @@ enum analyze_result declare_global_var(struct global_var_decl global_var,
     }
 
     if (global_var.type.key == CUSTOM &&
-        !is_declared(global_var.type.val.custom, table)) {
+        !is_type_defined(global_var.type.val.custom, table)) {
         fprintf(stderr,
                 error_msg[ERROR_UNDECLARED],
                 global_var.type.val.custom,
@@ -191,11 +199,83 @@ enum analyze_result declare_global_var(struct global_var_decl global_var,
     struct symbol* symbol = malloc(sizeof *symbol);
     symbol->id = global_var.token.val.string_v;
     symbol->type = SYMBOL_GLOBAL_VAR_DECL;
-    symbol->data.type = global_var.type;
+    symbol->data.global_var_decl = global_var;
     symbol->is_new_context = false;
 
     symbol->next = table->head;
     table->head = symbol;
 
     return SUCCESS;
+}
+
+enum analyze_result define_params(struct node* params, struct table* table) {
+    if (params != 0) {
+        struct parameter param = params->val.parameter;
+        printf("define param %s\n", param.token.val.string_v);
+        if (is_declared(param.token.val.string_v, table)) {
+            fprintf(stderr,
+                    error_msg[ERROR_ALREADY_DECLARED],
+                    param.token.val.string_v,
+                    param.token.line,
+                    param.token.column);
+            return ERROR_ALREADY_DECLARED;
+        }
+
+        if (param.type.key == CUSTOM &&
+            !is_type_defined(param.type.val.custom, table)) {
+            fprintf(stderr,
+                    error_msg[ERROR_UNDECLARED],
+                    param.type.val.custom,
+                    param.token.line,
+                    param.token.column);
+            return ERROR_UNDECLARED;
+        }
+
+        struct symbol* symbol = malloc(sizeof *symbol);
+        symbol->id = param.token.val.string_v;
+        symbol->type = SYMBOL_PARAM;
+        symbol->data.parameter = param;
+        symbol->is_new_context = false;
+
+        symbol->next = table->head;
+        table->head = symbol;
+
+        return define_params(param.next, table);
+    }
+
+    return SUCCESS;
+}
+
+enum analyze_result define_function(struct function_def function_def,
+                                    struct table* table) {
+    printf("define function: %s\n", function_def.token.val.string_v);
+    if (is_declared(function_def.token.val.string_v, table)) {
+        fprintf(stderr,
+                error_msg[ERROR_ALREADY_DECLARED],
+                function_def.token.val.string_v,
+                function_def.token.line,
+                function_def.token.column);
+        return ERROR_ALREADY_DECLARED;
+    }
+
+    if (function_def.type.key == CUSTOM &&
+        !is_type_defined(function_def.type.val.custom, table)) {
+        fprintf(stderr,
+                error_msg[ERROR_UNDECLARED],
+                function_def.type.val.custom,
+                function_def.token.line,
+                function_def.token.column);
+        return ERROR_UNDECLARED;
+    }
+
+    struct symbol* symbol = malloc(sizeof *symbol);
+    symbol->id = function_def.token.val.string_v;
+    symbol->type = SYMBOL_FUNCTION_DEF;
+    symbol->data.function_def = function_def;
+    symbol->is_new_context = true;
+
+    symbol->next = table->head;
+    table->head = symbol;
+
+    return define_params(function_def.params, table);
 }

@@ -22,7 +22,12 @@ enum analyze_result {
 
 extern const char* error_msg[];
 
-enum symbol_type { SYMBOL_CLASS_DEF, SYMBOL_GLOBAL_VAR_DECL };
+enum symbol_type {
+    SYMBOL_CLASS_DEF,
+    SYMBOL_GLOBAL_VAR_DECL,
+    SYMBOL_FUNCTION_DEF,
+    SYMBOL_PARAM
+};
 
 union symbol_data {
     struct node* fields_head;
@@ -32,7 +37,7 @@ union symbol_data {
 struct symbol {
     char* id;
     enum symbol_type type;
-    union symbol_data data;
+    union node_value data;
 
     bool is_new_context;
     struct symbol* next;
@@ -51,3 +56,5 @@ enum analyze_result define_class(struct class_def class_def,
                                  struct table* table);
 enum analyze_result declare_global_var(struct global_var_decl global_var,
                                        struct table* table);
+enum analyze_result define_function(struct function_def function_def,
+                                    struct table* table);
