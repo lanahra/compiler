@@ -4,7 +4,8 @@
 #include "../include/analyze.h"
 
 const char* error_msg[] =
-    {[ERROR_ALREADY_DECLARED] =
+    {[ERROR_UNDECLARED] = "Identifier not declared: %s line %d column %d\n",
+     [ERROR_ALREADY_DECLARED] =
          "Identifier already declared: %s line %d column %d\n"};
 
 struct table* alloc_table() {
@@ -19,7 +20,8 @@ void free_symbol(struct symbol* symbol) {
 
         switch (symbol->type) {
             case SYMBOL_CLASS_DEF:
-                free(symbol->id);
+                break;
+            case SYMBOL_GLOBAL_VAR_DECL:
                 break;
         }
     }
@@ -38,10 +40,6 @@ bool is_declared(char* id, struct table* table) {
     while (symbol != 0) {
         if (strcmp(id, symbol->id) == 0) {
             return true;
-        }
-
-        if (symbol->is_new_context) {
-            break;
         }
 
         symbol = symbol->next;
@@ -130,6 +128,7 @@ enum analyze_result analyze_node(struct node* node, struct table* table) {
                 result = define_class(node->val.class_def, table);
                 break;
             case N_GLOBAL_VAR_DECL:
+                result = declare_global_var(node->val.global_var_decl, table);
                 break;
             case N_UNIT:
                 result = analyze_node(node->val.unit.unit, table);
@@ -156,9 +155,43 @@ enum analyze_result define_class(struct class_def class_def,
     }
 
     struct symbol* symbol = malloc(sizeof *symbol);
-    symbol->id = strdup(class_def.token.val.string_v);
+    symbol->id = class_def.token.val.string_v;
     symbol->type = SYMBOL_CLASS_DEF;
     symbol->data.fields_head = class_def.field_list;
+    symbol->is_new_context = false;
+
+    symbol->next = table->head;
+    table->head = symbol;
+
+    return SUCCESS;
+}
+
+enum analyze_result declare_global_var(struct global_var_decl global_var,
+                                       struct table* table) {
+    printf("declare global var: %s\n", global_var.token.val.string_v);
+    if (is_declared(global_var.token.val.string_v, table)) {
+        fprintf(stderr,
+                error_msg[ERROR_ALREADY_DECLARED],
+                global_var.token.val.string_v,
+                global_var.token.line,
+                global_var.token.column);
+        return ERROR_ALREADY_DECLARED;
+    }
+
+    if (global_var.type.key == CUSTOM &&
+        !is_declared(global_var.type.val.custom, table)) {
+        fprintf(stderr,
+                error_msg[ERROR_UNDECLARED],
+                global_var.type.val.custom,
+                global_var.token.line,
+                global_var.token.column);
+        return ERROR_UNDECLARED;
+    }
+
+    struct symbol* symbol = malloc(sizeof *symbol);
+    symbol->id = global_var.token.val.string_v;
+    symbol->type = SYMBOL_GLOBAL_VAR_DECL;
+    symbol->data.type = global_var.type;
     symbol->is_new_context = false;
 
     symbol->next = table->head;

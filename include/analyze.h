@@ -2,7 +2,7 @@
 
 enum analyze_result {
     SUCCESS = 0,
-    ERROR_UNDECLARED_IDENTIFIER = 100,
+    ERROR_UNDECLARED = 100,
     ERROR_ALREADY_DECLARED = 101,
     ERROR_IS_VARIABLE = 200,
     ERROR_IS_VECTOR = 201,
@@ -22,10 +22,11 @@ enum analyze_result {
 
 extern const char* error_msg[];
 
-enum symbol_type { SYMBOL_CLASS_DEF };
+enum symbol_type { SYMBOL_CLASS_DEF, SYMBOL_GLOBAL_VAR_DECL };
 
 union symbol_data {
     struct node* fields_head;
+    struct type type;
 };
 
 struct symbol {
@@ -48,3 +49,5 @@ bool is_declared(char* id, struct table* table);
 enum analyze_result analyze_node(struct node* node, struct table* table);
 enum analyze_result define_class(struct class_def class_def,
                                  struct table* table);
+enum analyze_result declare_global_var(struct global_var_decl global_var,
+                                       struct table* table);
