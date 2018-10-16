@@ -32,6 +32,13 @@ const char* literal_type[] = {[INT] = "int",
                               [STRING] = "string",
                               [BOOL] = "bool"};
 
+const struct type val_type[] =
+    {[INT] = {.key = PRIMITIVE, .val.primitive = INT},
+     [FLOAT] = {.key = PRIMITIVE, .val.primitive = FLOAT},
+     [CHAR] = {.key = PRIMITIVE, .val.primitive = CHAR},
+     [STRING] = {.key = PRIMITIVE, .val.primitive = STRING},
+     [BOOL] = {.key = PRIMITIVE, .val.primitive = BOOL}};
+
 struct table* alloc_table() {
     struct table* table = malloc(sizeof *table);
     table->head = 0;
@@ -186,10 +193,37 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
             case N_EXP_LIST:
                 break;
             case N_SWITCH:
+                result = analyze_node(node->val.switch_cmd.control_exp, table);
+                if (result.status != SUCCESS) {
+                    return result;
+                }
+                result = convert_type(result.type, val_type[INT]);
+                if (result.status != SUCCESS) {
+                    return result;
+                }
+                result = analyze_node(node->val.switch_cmd.cmd_block, table);
                 break;
             case N_DO_WHILE:
+                result = analyze_node(node->val.do_while_cmd.cmd_block, table);
+                if (result.status != SUCCESS) {
+                    return result;
+                }
+                result = analyze_node(node->val.do_while_cmd.condition, table);
+                if (result.status != SUCCESS) {
+                    return result;
+                }
+                result = convert_type(result.type, val_type[BOOL]);
                 break;
             case N_WHILE:
+                result = analyze_node(node->val.while_cmd.condition, table);
+                if (result.status != SUCCESS) {
+                    return result;
+                }
+                result = convert_type(result.type, val_type[BOOL]);
+                if (result.status != SUCCESS) {
+                    return result;
+                }
+                result = analyze_node(node->val.while_cmd.cmd_block, table);
                 break;
             case N_FOR:
                 break;
@@ -204,6 +238,19 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
             case N_PIPE:
                 break;
             case N_IF:
+                result = analyze_node(node->val.if_cmd.condition, table);
+                if (result.status != SUCCESS) {
+                    return result;
+                }
+                result = convert_type(result.type, val_type[BOOL]);
+                if (result.status != SUCCESS) {
+                    return result;
+                }
+                result = analyze_node(node->val.if_cmd.then_cmd_block, table);
+                if (result.status != SUCCESS) {
+                    return result;
+                }
+                result = analyze_node(node->val.if_cmd.else_cmd_block, table);
                 break;
             case N_OUTPUT:
                 break;
@@ -224,31 +271,28 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
                 if (exp.status != SUCCESS) {
                     return exp;
                 }
-                struct type int_t;
-                int_t.key = PRIMITIVE;
-                int_t.val.primitive = INT;
-                result = convert_type(exp.type, int_t);
+                result = convert_type(exp.type, val_type[INT]);
                 if (result.status != SUCCESS) {
                     fprintf(stderr,
                             error_msg[result.status],
                             exp.type.key == CUSTOM
                                 ? exp.type.val.custom
                                 : literal_type[exp.type.val.primitive],
-                            int_t.key == CUSTOM
-                                ? int_t.val.custom
-                                : literal_type[int_t.val.primitive],
+                            val_type[INT].key == CUSTOM
+                                ? val_type[INT].val.custom
+                                : literal_type[val_type[INT].val.primitive],
                             node->val.shift_cmd.var->val.var.token.line,
                             node->val.shift_cmd.var->val.var.token.column);
                     return result;
                 }
 
-                result = convert_type(int_t, var.type);
+                result = convert_type(val_type[INT], var.type);
                 if (result.status != SUCCESS) {
                     fprintf(stderr,
                             error_msg[result.status],
-                            int_t.key == CUSTOM
-                                ? int_t.val.custom
-                                : literal_type[int_t.val.primitive],
+                            val_type[INT].key == CUSTOM
+                                ? val_type[INT].val.custom
+                                : literal_type[val_type[INT].val.primitive],
                             var.type.key == CUSTOM
                                 ? var.type.val.custom
                                 : literal_type[var.type.val.primitive],
