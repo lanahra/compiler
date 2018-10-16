@@ -212,8 +212,32 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
             case N_VAR:
                 result = analyze_var(node->val.var, table);
                 break;
-            case N_ATTRIBUTION:
+            case N_ATTRIBUTION: {
+                struct analyze_result var =
+                    analyze_node(node->val.attr_cmd.var, table);
+                if (var.status != SUCCESS) {
+                    return var;
+                }
+                struct analyze_result exp =
+                    analyze_node(node->val.attr_cmd.exp, table);
+                if (exp.status != SUCCESS) {
+                    return exp;
+                }
+                result = convert_type(exp.type, var.type);
+                if (result.status != SUCCESS) {
+                    fprintf(stderr,
+                            error_msg[result.status],
+                            exp.type.key == CUSTOM
+                                ? exp.type.val.custom
+                                : literal_type[exp.type.val.primitive],
+                            var.type.key == CUSTOM
+                                ? var.type.val.custom
+                                : literal_type[var.type.val.primitive],
+                            node->val.attr_cmd.var->val.var.token.line,
+                            node->val.attr_cmd.var->val.var.token.column);
+                }
                 break;
+            }
             case N_LOCAL_VAR_DECL:
                 result = declare_local_var(node->val.local_var_decl, table);
                 break;
