@@ -206,17 +206,17 @@ primitive_type_specifier
 
 literal
     : INT_LITERAL {
-        $$ = make_int_literal($1.val.int_v); }
+        $$ = make_literal($1); }
     | FLOAT_LITERAL {
-        $$ = make_float_literal($1.val.float_v); }
+        $$ = make_literal($1); }
     | FALSE {
-        $$ = make_bool_literal($1.val.bool_v); }
+        $$ = make_literal($1); }
     | TRUE {
-        $$ = make_bool_literal($1.val.bool_v); }
+        $$ = make_literal($1); }
     | CHAR_LITERAL {
-        $$ = make_char_literal($1.val.char_v); }
+        $$ = make_literal($1); }
     | STRING_LITERAL {
-        $$ = make_string_literal($1.val.string_v); }
+        $$ = make_literal($1); }
     ;
 
 type_specifier

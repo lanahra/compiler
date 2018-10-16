@@ -334,24 +334,30 @@ void assign_token_value(int type) {
 
     switch (type) {
         case INT_LITERAL:
+            yylval.token.type = INT;
             val.int_v = atoi(yytext);
             break;
         case FLOAT_LITERAL:
+            yylval.token.type = FLOAT;
             val.float_v = atof(yytext);
             break;
         case CHAR_LITERAL:
+            yylval.token.type = CHAR;
             val.char_v = yytext[1];
             break;
         case STRING_LITERAL:
+            yylval.token.type = STRING;
             val.string_v = strndup(yytext + 1, strlen(yytext) - 2);
             break;
         case ID:
             val.string_v = strdup(yytext);
             break;
         case FALSE:
+            yylval.token.type = BOOL;
             val.bool_v = false;
             break;
         case TRUE:
+            yylval.token.type = BOOL;
             val.bool_v = true;
             break;
         default:

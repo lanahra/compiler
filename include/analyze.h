@@ -1,6 +1,6 @@
 #include "node.h"
 
-enum analyze_result {
+enum status {
     SUCCESS = 0,
     ERROR_UNDECLARED = 100,
     ERROR_ALREADY_DECLARED = 101,
@@ -20,24 +20,34 @@ enum analyze_result {
     ERROR_MISMATCHED_TYPE_RETURN = 502
 };
 
+enum var_access {
+    ACCESS_PRIMITIVE,
+    ACCESS_CLASS,
+    ACCESS_PRIMITIVE_ARRAY,
+    ACCESS_CLASS_ARRAY,
+    ACCESS_FUNCTION
+};
+
+struct analyze_result {
+    enum status status;
+    struct type type;
+};
+
 extern const char* error_msg[];
 
 enum symbol_type {
     SYMBOL_CLASS_DEF,
     SYMBOL_GLOBAL_VAR_DECL,
     SYMBOL_FUNCTION_DEF,
-    SYMBOL_PARAM
-};
-
-union symbol_data {
-    struct node* fields_head;
-    struct type type;
+    SYMBOL_PARAM,
+    SYMBOL_LOCAL_VAR_DECL
 };
 
 struct symbol {
     char* id;
     enum symbol_type type;
     union node_value data;
+    enum var_access var_access;
 
     bool is_new_context;
     struct symbol* next;
@@ -49,12 +59,14 @@ struct table {
 
 struct table* alloc_table();
 void free_table(struct table* table);
-bool is_declared(char* id, struct table* table);
 
-enum analyze_result analyze_node(struct node* node, struct table* table);
-enum analyze_result define_class(struct class_def class_def,
+struct analyze_result analyze_node(struct node* node, struct table* table);
+struct analyze_result define_class(struct class_def class_def,
                                  struct table* table);
-enum analyze_result declare_global_var(struct global_var_decl global_var,
+struct analyze_result declare_global_var(struct global_var_decl global_var,
                                        struct table* table);
-enum analyze_result define_function(struct function_def function_def,
+struct analyze_result define_function(struct function_def function_def,
                                     struct table* table);
+struct analyze_result declare_local_var(struct local_var_decl local_var,
+                                      struct table* table);
+struct analyze_result analyze_var(struct var var, struct table* table);

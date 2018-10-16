@@ -3,11 +3,7 @@
 #include <stdbool.h>
 
 enum node_type {
-    N_INT_LITERAL,
-    N_FLOAT_LITERAL,
-    N_CHAR_LITERAL,
-    N_STRING_LITERAL,
-    N_BOOL_LITERAL,
+    N_LITERAL,
     N_UNARY_EXP,
     N_BINARY_EXP,
     N_TERNARY_EXP,
@@ -239,7 +235,7 @@ struct unit {
 };
 
 union node_value {
-    union literal literal;
+    struct token token;
     struct unary_exp unary_exp;
     struct binary_exp binary_exp;
     struct ternary_exp ternary_exp;
@@ -278,11 +274,7 @@ struct node {
 };
 
 struct node* alloc_node(enum node_type);
-struct node* make_int_literal(int int_v);
-struct node* make_float_literal(float float_v);
-struct node* make_bool_literal(bool bool_v);
-struct node* make_char_literal(char char_v);
-struct node* make_string_literal(char* string_v);
+struct node* make_literal(struct token token);
 struct node* make_unary_exp(int op, struct node* operand);
 struct node* make_binary_exp(struct node* left, int op, struct node* right);
 struct node* make_ternary_exp(struct node* condition,

@@ -19,12 +19,12 @@ int main(int argc, char** argv) {
     decompile_node(node);
 
     struct table* table = alloc_table();
-    enum analyze_result result = analyze_node(node, table);
-    printf("%d\n", result);
+    struct analyze_result result = analyze_node(node, table);
+    printf("%d\n", result.status);
 
     free_table(table);
     free_node(node);
     yylex_destroy();
 
-    return result;
+    return result.status;
 }

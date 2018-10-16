@@ -2,11 +2,7 @@
 #include <stdlib.h>
 #include "../include/parser.tab.h"
 
-const char* type_name[] = {[N_INT_LITERAL] = "N_INT_LITERAL",
-                           [N_FLOAT_LITERAL] = "N_FLOAT_LITERAL",
-                           [N_CHAR_LITERAL] = "N_CHAR_LITERAL",
-                           [N_STRING_LITERAL] = "N_STRING_LITERAL",
-                           [N_BOOL_LITERAL] = "N_BOOL_LITERAL",
+const char* type_name[] = {[N_LITERAL] = "N_LITERAL",
                            [N_UNARY_EXP] = "N_UNARY_EXP",
                            [N_BINARY_EXP] = "N_BINARY_EXP",
                            [N_TERNARY_EXP] = "N_TERNARY_EXP",
@@ -47,33 +43,9 @@ struct node* alloc_node(enum node_type type) {
     return node;
 }
 
-struct node* make_int_literal(int int_v) {
-    struct node* node = alloc_node(N_INT_LITERAL);
-    node->val.literal.int_v = int_v;
-    return node;
-}
-
-struct node* make_float_literal(float float_v) {
-    struct node* node = alloc_node(N_FLOAT_LITERAL);
-    node->val.literal.float_v = float_v;
-    return node;
-}
-
-struct node* make_bool_literal(bool bool_v) {
-    struct node* node = alloc_node(N_BOOL_LITERAL);
-    node->val.literal.bool_v = bool_v;
-    return node;
-}
-
-struct node* make_char_literal(char char_v) {
-    struct node* node = alloc_node(N_CHAR_LITERAL);
-    node->val.literal.char_v = char_v;
-    return node;
-}
-
-struct node* make_string_literal(char* string_v) {
-    struct node* node = alloc_node(N_STRING_LITERAL);
-    node->val.literal.string_v = string_v;
+struct node* make_literal(struct token token) {
+    struct node* node = alloc_node(N_LITERAL);
+    node->val.token = token;
     return node;
 }
 
@@ -380,8 +352,10 @@ struct node* make_unit(struct node* unit, struct node* element) {
 void free_node(struct node* node) {
     if (node != 0) {
         switch (node->type) {
-            case N_STRING_LITERAL:
-                free(node->val.literal.string_v);
+            case N_LITERAL:
+                if (node->val.token.type == STRING) {
+                    free(node->val.token.val.string_v);
+                }
                 break;
             case N_UNARY_EXP:
                 free_node(node->val.unary_exp.operand);
@@ -559,20 +533,24 @@ void decompile_node(struct node* node) {
     static bool is_case_cmd = false;
     if (node != 0) {
         switch (node->type) {
-            case N_INT_LITERAL:
-                printf("%d", node->val.literal.int_v);
-                break;
-            case N_FLOAT_LITERAL:
-                printf("%f", node->val.literal.float_v);
-                break;
-            case N_CHAR_LITERAL:
-                printf("'%c'", node->val.literal.char_v);
-                break;
-            case N_STRING_LITERAL:
-                printf("\"%s\"", node->val.literal.string_v);
-                break;
-            case N_BOOL_LITERAL:
-                printf(node->val.literal.bool_v ? "true" : "false");
+            case N_LITERAL:
+                switch (node->val.token.type) {
+                    case INT:
+                        printf("%d", node->val.token.val.int_v);
+                        break;
+                    case FLOAT:
+                        printf("%f", node->val.token.val.float_v);
+                        break;
+                    case CHAR:
+                        printf("'%c'", node->val.token.val.char_v);
+                        break;
+                    case STRING:
+                        printf("\"%s\"", node->val.token.val.string_v);
+                        break;
+                    case BOOL:
+                        printf(node->val.token.val.bool_v ? "true" : "false");
+                        break;
+                }
                 break;
             case N_UNARY_EXP:
                 printf("%c", node->val.unary_exp.op);

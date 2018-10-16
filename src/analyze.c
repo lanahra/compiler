@@ -2,11 +2,35 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../include/analyze.h"
+#include "../include/parser.tab.h"
 
-const char* error_msg[] =
-    {[ERROR_UNDECLARED] = "Identifier not declared: %s line %d column %d\n",
-     [ERROR_ALREADY_DECLARED] =
-         "Identifier already declared: %s line %d column %d\n"};
+const char* error_msg[] = {
+        [ERROR_UNDECLARED] = "Identifier not declared: %s line %d column %d\n",
+        [ERROR_ALREADY_DECLARED] =
+            "Identifier already declared: %s line %d column %d\n",
+        [ERROR_MISMATCHED_TYPE] =
+            "Mismatched types: %s and %s line %d column %d\n",
+        [ERROR_IMPLICIT_CONVERSION_STRING] =
+            "Cannot convert %s to %s line %d column %d\n",
+        [ERROR_IMPLICIT_CONVERSION_CHAR] =
+            "Cannot convert %s to %s line %d column %d\n",
+        [ERROR_IMPLICIT_CONVERSION_USER] =
+            "Cannot convert %s to %s line %d column %d\n",
+        [ERROR_IS_VARIABLE] =
+            "Identifier %s must be used as a variable line %d column %d\n",
+        [ERROR_IS_VECTOR] =
+            "Identifier %s must be used as a vector line %d column %d\n",
+        [ERROR_IS_USER] =
+            "Identifier %s must be used as a class line %d column %d\n",
+        [ERROR_IS_FUNCTION] =
+            "Identifier %s must be used as a function line %d column %d\n",
+};
+
+const char* literal_type[] = {[INT] = "int",
+                              [FLOAT] = "string",
+                              [CHAR] = "char",
+                              [STRING] = "string",
+                              [BOOL] = "bool"};
 
 struct table* alloc_table() {
     struct table* table = malloc(sizeof *table);
@@ -55,21 +79,93 @@ bool is_type_defined(char* id, struct table* table) {
     return false;
 }
 
-enum analyze_result analyze_node(struct node* node, struct table* table) {
-    enum analyze_result result = SUCCESS;
+struct symbol* get_symbol(char* id, struct table* table) {
+    struct symbol* symbol = table->head;
+
+    while (symbol != 0) {
+        if (strcmp(id, symbol->id) == 0) {
+            return symbol;
+        }
+
+        symbol = symbol->next;
+    }
+
+    return 0;
+}
+
+struct node* get_field(char* field, struct node* head) {
+    struct node* node = head;
+
+    while (node != 0) {
+        if (strcmp(field, node->val.field.token.val.string_v) == 0) {
+            return node;
+        }
+
+        node = node->val.field.next;
+    }
+
+    return 0;
+}
+
+struct analyze_result convert_type(struct type type, struct type target) {
+    struct analyze_result result;
+    if (type.key == CUSTOM && target.key == CUSTOM) {
+        if (strcmp(type.val.custom, target.val.custom) == 0) {
+            result.status = SUCCESS;
+            return result;
+        } else {
+            result.status = ERROR_IMPLICIT_CONVERSION_USER;
+            return result;
+        }
+    } else if (type.key == CUSTOM || target.key == CUSTOM) {
+        result.status = ERROR_IMPLICIT_CONVERSION_USER;
+        return result;
+    } else if (type.val.primitive == target.val.primitive) {
+        result.status = SUCCESS;
+        return result;
+    }
+
+    switch (type.val.primitive) {
+        case INT:
+            if (target.val.primitive == FLOAT || target.val.primitive == BOOL) {
+                result.status = SUCCESS;
+                return result;
+            }
+            break;
+        case FLOAT:
+            if (target.val.primitive == INT || target.val.primitive == BOOL) {
+                result.status = SUCCESS;
+                return result;
+            }
+            break;
+        case BOOL:
+            if (target.val.primitive == FLOAT || target.val.primitive == INT) {
+                result.status = SUCCESS;
+                return result;
+            }
+            break;
+        case CHAR:
+            result.status = ERROR_IMPLICIT_CONVERSION_CHAR;
+            return result;
+        case STRING:
+            result.status = ERROR_IMPLICIT_CONVERSION_STRING;
+            return result;
+    }
+
+    result.status = ERROR_MISMATCHED_TYPE;
+    return result;
+}
+
+struct analyze_result analyze_node(struct node* node, struct table* table) {
+    struct analyze_result result;
+    result.status = SUCCESS;
 
     if (node != 0) {
         printf("%s\n", type_name[node->type]);
         switch (node->type) {
-            case N_INT_LITERAL:
-                break;
-            case N_FLOAT_LITERAL:
-                break;
-            case N_CHAR_LITERAL:
-                break;
-            case N_STRING_LITERAL:
-                break;
-            case N_BOOL_LITERAL:
+            case N_LITERAL:
+                result.type.key = PRIMITIVE;
+                result.type.val.primitive = node->val.token.type;
                 break;
             case N_UNARY_EXP:
                 break;
@@ -114,21 +210,32 @@ enum analyze_result analyze_node(struct node* node, struct table* table) {
             case N_CONTINUE:
                 break;
             case N_VAR:
+                result = analyze_var(node->val.var, table);
                 break;
             case N_ATTRIBUTION:
                 break;
             case N_LOCAL_VAR_DECL:
+                result = declare_local_var(node->val.local_var_decl, table);
                 break;
             case N_CMD_LIST:
                 break;
             case N_CMD_BLOCK:
+                result = analyze_node(node->val.cmd_block.high_list, table);
                 break;
             case N_HIGH_LIST:
+                result = analyze_node(node->val.high_list.high_list, table);
+                if (result.status == SUCCESS) {
+                    result = analyze_node(node->val.high_list.cmd, table);
+                }
                 break;
             case N_PARAM:
                 break;
             case N_FUNCTION_DEF:
                 result = define_function(node->val.function_def, table);
+                if (result.status == SUCCESS) {
+                    result =
+                        analyze_node(node->val.function_def.cmd_block, table);
+                }
                 break;
             case N_FIELD:
                 break;
@@ -140,7 +247,7 @@ enum analyze_result analyze_node(struct node* node, struct table* table) {
                 break;
             case N_UNIT:
                 result = analyze_node(node->val.unit.unit, table);
-                if (result == SUCCESS) {
+                if (result.status == SUCCESS) {
                     result = analyze_node(node->val.unit.element, table);
                 }
                 break;
@@ -150,8 +257,10 @@ enum analyze_result analyze_node(struct node* node, struct table* table) {
     return result;
 }
 
-enum analyze_result define_class(struct class_def class_def,
-                                 struct table* table) {
+struct analyze_result define_class(struct class_def class_def,
+                                   struct table* table) {
+    struct analyze_result result;
+    result.status = SUCCESS;
     printf("define class: %s\n", class_def.token.val.string_v);
     if (is_declared(class_def.token.val.string_v, table)) {
         fprintf(stderr,
@@ -159,7 +268,8 @@ enum analyze_result define_class(struct class_def class_def,
                 class_def.token.val.string_v,
                 class_def.token.line,
                 class_def.token.column);
-        return ERROR_ALREADY_DECLARED;
+        result.status = ERROR_ALREADY_DECLARED;
+        return result;
     }
 
     struct symbol* symbol = malloc(sizeof *symbol);
@@ -171,11 +281,13 @@ enum analyze_result define_class(struct class_def class_def,
     symbol->next = table->head;
     table->head = symbol;
 
-    return SUCCESS;
+    return result;
 }
 
-enum analyze_result declare_global_var(struct global_var_decl global_var,
-                                       struct table* table) {
+struct analyze_result declare_global_var(struct global_var_decl global_var,
+                                         struct table* table) {
+    struct analyze_result result;
+    result.status = SUCCESS;
     printf("declare global var: %s\n", global_var.token.val.string_v);
     if (is_declared(global_var.token.val.string_v, table)) {
         fprintf(stderr,
@@ -183,7 +295,8 @@ enum analyze_result declare_global_var(struct global_var_decl global_var,
                 global_var.token.val.string_v,
                 global_var.token.line,
                 global_var.token.column);
-        return ERROR_ALREADY_DECLARED;
+        result.status = ERROR_ALREADY_DECLARED;
+        return result;
     }
 
     if (global_var.type.key == CUSTOM &&
@@ -193,7 +306,8 @@ enum analyze_result declare_global_var(struct global_var_decl global_var,
                 global_var.type.val.custom,
                 global_var.token.line,
                 global_var.token.column);
-        return ERROR_UNDECLARED;
+        result.status = ERROR_UNDECLARED;
+        return result;
     }
 
     struct symbol* symbol = malloc(sizeof *symbol);
@@ -202,13 +316,29 @@ enum analyze_result declare_global_var(struct global_var_decl global_var,
     symbol->data.global_var_decl = global_var;
     symbol->is_new_context = false;
 
+    if (global_var.type.key == CUSTOM) {
+        if (global_var.size == -1) {
+            symbol->var_access = ACCESS_CLASS;
+        } else {
+            symbol->var_access = ACCESS_CLASS_ARRAY;
+        }
+    } else {
+        if (global_var.size == -1) {
+            symbol->var_access = ACCESS_PRIMITIVE;
+        } else {
+            symbol->var_access = ACCESS_PRIMITIVE_ARRAY;
+        }
+    }
+
     symbol->next = table->head;
     table->head = symbol;
 
-    return SUCCESS;
+    return result;
 }
 
-enum analyze_result define_params(struct node* params, struct table* table) {
+struct analyze_result define_params(struct node* params, struct table* table) {
+    struct analyze_result result;
+    result.status = SUCCESS;
     if (params != 0) {
         struct parameter param = params->val.parameter;
         printf("define param %s\n", param.token.val.string_v);
@@ -218,7 +348,8 @@ enum analyze_result define_params(struct node* params, struct table* table) {
                     param.token.val.string_v,
                     param.token.line,
                     param.token.column);
-            return ERROR_ALREADY_DECLARED;
+            result.status = ERROR_ALREADY_DECLARED;
+            return result;
         }
 
         if (param.type.key == CUSTOM &&
@@ -228,7 +359,8 @@ enum analyze_result define_params(struct node* params, struct table* table) {
                     param.type.val.custom,
                     param.token.line,
                     param.token.column);
-            return ERROR_UNDECLARED;
+            result.status = ERROR_UNDECLARED;
+            return result;
         }
 
         struct symbol* symbol = malloc(sizeof *symbol);
@@ -243,11 +375,13 @@ enum analyze_result define_params(struct node* params, struct table* table) {
         return define_params(param.next, table);
     }
 
-    return SUCCESS;
+    return result;
 }
 
-enum analyze_result define_function(struct function_def function_def,
-                                    struct table* table) {
+struct analyze_result define_function(struct function_def function_def,
+                                      struct table* table) {
+    struct analyze_result result;
+    result.status = SUCCESS;
     printf("define function: %s\n", function_def.token.val.string_v);
     if (is_declared(function_def.token.val.string_v, table)) {
         fprintf(stderr,
@@ -255,7 +389,8 @@ enum analyze_result define_function(struct function_def function_def,
                 function_def.token.val.string_v,
                 function_def.token.line,
                 function_def.token.column);
-        return ERROR_ALREADY_DECLARED;
+        result.status = ERROR_ALREADY_DECLARED;
+        return result;
     }
 
     if (function_def.type.key == CUSTOM &&
@@ -265,7 +400,8 @@ enum analyze_result define_function(struct function_def function_def,
                 function_def.type.val.custom,
                 function_def.token.line,
                 function_def.token.column);
-        return ERROR_UNDECLARED;
+        result.status = ERROR_UNDECLARED;
+        return result;
     }
 
     struct symbol* symbol = malloc(sizeof *symbol);
@@ -273,9 +409,200 @@ enum analyze_result define_function(struct function_def function_def,
     symbol->type = SYMBOL_FUNCTION_DEF;
     symbol->data.function_def = function_def;
     symbol->is_new_context = true;
+    symbol->var_access = ACCESS_FUNCTION;
 
     symbol->next = table->head;
     table->head = symbol;
 
     return define_params(function_def.params, table);
+}
+
+struct analyze_result declare_local_var(struct local_var_decl local_var,
+                                        struct table* table) {
+    struct analyze_result result;
+    result.status = SUCCESS;
+    printf("declare local var: %s\n", local_var.token.val.string_v);
+    if (is_declared(local_var.token.val.string_v, table)) {
+        fprintf(stderr,
+                error_msg[ERROR_ALREADY_DECLARED],
+                local_var.token.val.string_v,
+                local_var.token.line,
+                local_var.token.column);
+        result.status = ERROR_ALREADY_DECLARED;
+        return result;
+    }
+
+    if (local_var.type.key == CUSTOM &&
+        !is_type_defined(local_var.type.val.custom, table)) {
+        fprintf(stderr,
+                error_msg[ERROR_UNDECLARED],
+                local_var.type.val.custom,
+                local_var.token.line,
+                local_var.token.column);
+        result.status = ERROR_UNDECLARED;
+        return result;
+    }
+
+    struct symbol* symbol = malloc(sizeof *symbol);
+    symbol->id = local_var.token.val.string_v;
+    symbol->type = SYMBOL_LOCAL_VAR_DECL;
+    symbol->data.local_var_decl = local_var;
+    symbol->is_new_context = false;
+
+    if (local_var.type.key == CUSTOM) {
+        symbol->var_access = ACCESS_CLASS;
+    } else {
+        symbol->var_access = ACCESS_PRIMITIVE;
+    }
+
+    symbol->next = table->head;
+    table->head = symbol;
+
+    if (local_var.init != 0) {
+        result = analyze_node(local_var.init, table);
+        if (result.status != SUCCESS) {
+            return result;
+        }
+
+        struct type type = result.type;
+        result = convert_type(result.type, local_var.type);
+
+        if (result.status != SUCCESS) {
+            fprintf(stderr,
+                    error_msg[result.status],
+                    type.key == CUSTOM ? type.val.custom
+                                       : literal_type[type.val.primitive],
+                    local_var.type.key == CUSTOM
+                        ? local_var.type.val.custom
+                        : literal_type[local_var.type.val.primitive],
+                    local_var.token.line,
+                    local_var.token.column);
+        }
+    }
+    return result;
+}
+
+struct analyze_result analyze_var(struct var var, struct table* table) {
+    struct analyze_result result;
+    result.status = SUCCESS;
+
+    struct symbol* symbol = get_symbol(var.token.val.string_v, table);
+    if (symbol == 0) {
+        fprintf(stderr,
+                error_msg[ERROR_UNDECLARED],
+                var.token.val.string_v,
+                var.token.line,
+                var.token.column);
+        result.status = ERROR_UNDECLARED;
+        return result;
+    }
+
+    enum var_access var_access;
+    if (var.field_access == 0) {
+        if (var.array_access == 0) {
+            var_access = ACCESS_PRIMITIVE;
+        } else {
+            var_access = ACCESS_PRIMITIVE_ARRAY;
+        }
+    } else {
+        if (var.array_access == 0) {
+            var_access = ACCESS_CLASS;
+        } else {
+            var_access = ACCESS_CLASS_ARRAY;
+        }
+    }
+
+    if (var_access != symbol->var_access) {
+        const char* msg = "";
+        switch (symbol->var_access) {
+            case ACCESS_PRIMITIVE:
+                msg = error_msg[ERROR_IS_VARIABLE];
+                result.status = ERROR_IS_VARIABLE;
+                break;
+            case ACCESS_CLASS:
+                msg = error_msg[ERROR_IS_USER];
+                result.status = ERROR_IS_USER;
+                break;
+            case ACCESS_PRIMITIVE_ARRAY:
+            case ACCESS_CLASS_ARRAY:
+                msg = error_msg[ERROR_IS_VECTOR];
+                result.status = ERROR_IS_VECTOR;
+                break;
+            case ACCESS_FUNCTION:
+                msg = error_msg[ERROR_IS_FUNCTION];
+                result.status = ERROR_IS_FUNCTION;
+                break;
+        }
+
+        fprintf(stderr,
+                msg,
+                var.token.val.string_v,
+                var.token.line,
+                var.token.column);
+        return result;
+    }
+
+    if (var.array_access != 0) {
+        result = analyze_node(var.array_access, table);
+        if (result.status != SUCCESS) {
+            return result;
+        }
+
+        struct type int_t;
+        int_t.key = PRIMITIVE;
+        int_t.val.primitive = INT;
+        result = convert_type(result.type, int_t);
+        if (result.status != SUCCESS) {
+            fprintf(stderr,
+                    error_msg[ERROR_MISMATCHED_TYPE],
+                    literal_type[var.token.type],
+                    literal_type[INT],
+                    var.token.line,
+                    var.token.column);
+            return result;
+        }
+    }
+
+    if (var.field_access == 0) {
+        switch (symbol->type) {
+            case SYMBOL_GLOBAL_VAR_DECL:
+                result.type = symbol->data.global_var_decl.type;
+                break;
+            case SYMBOL_LOCAL_VAR_DECL:
+                result.type = symbol->data.local_var_decl.type;
+                break;
+            default:
+                break;
+        }
+    } else {
+        struct symbol* class = 0;
+        struct node* field = 0;
+        switch (symbol->type) {
+            case SYMBOL_GLOBAL_VAR_DECL:
+                class = get_symbol(symbol->data.global_var_decl.type.val.custom,
+                                   table);
+                break;
+            case SYMBOL_LOCAL_VAR_DECL:
+                class = get_symbol(symbol->data.local_var_decl.type.val.custom,
+                                   table);
+                break;
+            default:
+                break;
+        }
+
+        field = get_field(var.field_access, class->data.class_def.field_list);
+        if (field == 0) {
+            fprintf(stderr,
+                    error_msg[ERROR_UNDECLARED],
+                    var.field_access,
+                    var.token.line,
+                    var.token.column);
+            result.status = ERROR_UNDECLARED;
+            return result;
+        }
+
+        result.type = field->val.field.type;
+    }
+
+    return result;
 }
