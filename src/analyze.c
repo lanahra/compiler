@@ -152,6 +152,16 @@ struct analyze_result convert_type(struct type type, struct type target) {
             return result;
     }
 
+    if (target.val.primitive == CHAR) {
+        result.status = ERROR_IMPLICIT_CONVERSION_CHAR;
+        return result;
+    }
+
+    if (target.val.primitive == STRING) {
+        result.status = ERROR_IMPLICIT_CONVERSION_STRING;
+        return result;
+    }
+
     result.status = ERROR_MISMATCHED_TYPE;
     return result;
 }
@@ -203,8 +213,50 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
                 break;
             case N_RETURN:
                 break;
-            case N_SHIFT:
+            case N_SHIFT: {
+                struct analyze_result var =
+                    analyze_node(node->val.shift_cmd.var, table);
+                if (var.status != SUCCESS) {
+                    return var;
+                }
+                struct analyze_result exp =
+                    analyze_node(node->val.shift_cmd.exp, table);
+                if (exp.status != SUCCESS) {
+                    return exp;
+                }
+                struct type int_t;
+                int_t.key = PRIMITIVE;
+                int_t.val.primitive = INT;
+                result = convert_type(exp.type, int_t);
+                if (result.status != SUCCESS) {
+                    fprintf(stderr,
+                            error_msg[result.status],
+                            exp.type.key == CUSTOM
+                                ? exp.type.val.custom
+                                : literal_type[exp.type.val.primitive],
+                            int_t.key == CUSTOM
+                                ? int_t.val.custom
+                                : literal_type[int_t.val.primitive],
+                            node->val.shift_cmd.var->val.var.token.line,
+                            node->val.shift_cmd.var->val.var.token.column);
+                    return result;
+                }
+
+                result = convert_type(int_t, var.type);
+                if (result.status != SUCCESS) {
+                    fprintf(stderr,
+                            error_msg[result.status],
+                            int_t.key == CUSTOM
+                                ? int_t.val.custom
+                                : literal_type[int_t.val.primitive],
+                            var.type.key == CUSTOM
+                                ? var.type.val.custom
+                                : literal_type[var.type.val.primitive],
+                            node->val.shift_cmd.var->val.var.token.line,
+                            node->val.shift_cmd.var->val.var.token.column);
+                }
                 break;
+            }
             case N_BREAK:
                 break;
             case N_CONTINUE:
