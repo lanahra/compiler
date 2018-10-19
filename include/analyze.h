@@ -62,11 +62,17 @@ void free_table(struct table* table);
 
 struct analyze_result analyze_node(struct node* node, struct table* table);
 struct analyze_result define_class(struct class_def class_def,
-                                 struct table* table);
+                                   struct table* table);
 struct analyze_result declare_global_var(struct global_var_decl global_var,
-                                       struct table* table);
+                                         struct table* table);
 struct analyze_result define_function(struct function_def function_def,
-                                    struct table* table);
-struct analyze_result declare_local_var(struct local_var_decl local_var,
                                       struct table* table);
+struct analyze_result declare_local_var(struct local_var_decl local_var,
+                                        struct table* table);
 struct analyze_result analyze_var(struct var var, struct table* table);
+struct analyze_result analyze_return(struct return_cmd return_cmd,
+                                     struct table* table);
+struct analyze_result analyze_attr(struct attr_cmd attr_cmd,
+                                   struct table* table);
+struct analyze_result analyze_shift(struct shift_cmd shift_cmd,
+                                    struct table* table);

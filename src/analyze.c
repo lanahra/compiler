@@ -24,6 +24,8 @@ const char* error_msg[] = {
             "Identifier %s must be used as a class line %d column %d\n",
         [ERROR_IS_FUNCTION] =
             "Identifier %s must be used as a function line %d column %d\n",
+        [ERROR_MISMATCHED_TYPE_RETURN] =
+            "Wrong return type of function %s line %d column %d\n",
 };
 
 const char* literal_type[] = {[INT] = "int",
@@ -91,6 +93,20 @@ struct symbol* get_symbol(char* id, struct table* table) {
 
     while (symbol != 0) {
         if (strcmp(id, symbol->id) == 0) {
+            return symbol;
+        }
+
+        symbol = symbol->next;
+    }
+
+    return 0;
+}
+
+struct symbol* get_function(struct table* table) {
+    struct symbol* symbol = table->head;
+
+    while (symbol != 0) {
+        if (symbol->type == SYMBOL_FUNCTION_DEF) {
             return symbol;
         }
 
@@ -259,48 +275,11 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
             case N_CASE:
                 break;
             case N_RETURN:
+                result = analyze_return(node->val.return_cmd, table);
                 break;
-            case N_SHIFT: {
-                struct analyze_result var =
-                    analyze_node(node->val.shift_cmd.var, table);
-                if (var.status != SUCCESS) {
-                    return var;
-                }
-                struct analyze_result exp =
-                    analyze_node(node->val.shift_cmd.exp, table);
-                if (exp.status != SUCCESS) {
-                    return exp;
-                }
-                result = convert_type(exp.type, val_type[INT]);
-                if (result.status != SUCCESS) {
-                    fprintf(stderr,
-                            error_msg[result.status],
-                            exp.type.key == CUSTOM
-                                ? exp.type.val.custom
-                                : literal_type[exp.type.val.primitive],
-                            val_type[INT].key == CUSTOM
-                                ? val_type[INT].val.custom
-                                : literal_type[val_type[INT].val.primitive],
-                            node->val.shift_cmd.var->val.var.token.line,
-                            node->val.shift_cmd.var->val.var.token.column);
-                    return result;
-                }
-
-                result = convert_type(val_type[INT], var.type);
-                if (result.status != SUCCESS) {
-                    fprintf(stderr,
-                            error_msg[result.status],
-                            val_type[INT].key == CUSTOM
-                                ? val_type[INT].val.custom
-                                : literal_type[val_type[INT].val.primitive],
-                            var.type.key == CUSTOM
-                                ? var.type.val.custom
-                                : literal_type[var.type.val.primitive],
-                            node->val.shift_cmd.var->val.var.token.line,
-                            node->val.shift_cmd.var->val.var.token.column);
-                }
+            case N_SHIFT:
+                result = analyze_shift(node->val.shift_cmd, table);
                 break;
-            }
             case N_BREAK:
                 break;
             case N_CONTINUE:
@@ -308,32 +287,9 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
             case N_VAR:
                 result = analyze_var(node->val.var, table);
                 break;
-            case N_ATTRIBUTION: {
-                struct analyze_result var =
-                    analyze_node(node->val.attr_cmd.var, table);
-                if (var.status != SUCCESS) {
-                    return var;
-                }
-                struct analyze_result exp =
-                    analyze_node(node->val.attr_cmd.exp, table);
-                if (exp.status != SUCCESS) {
-                    return exp;
-                }
-                result = convert_type(exp.type, var.type);
-                if (result.status != SUCCESS) {
-                    fprintf(stderr,
-                            error_msg[result.status],
-                            exp.type.key == CUSTOM
-                                ? exp.type.val.custom
-                                : literal_type[exp.type.val.primitive],
-                            var.type.key == CUSTOM
-                                ? var.type.val.custom
-                                : literal_type[var.type.val.primitive],
-                            node->val.attr_cmd.var->val.var.token.line,
-                            node->val.attr_cmd.var->val.var.token.column);
-                }
+            case N_ATTRIBUTION:
+                result = analyze_attr(node->val.attr_cmd, table);
                 break;
-            }
             case N_LOCAL_VAR_DECL:
                 result = declare_local_var(node->val.local_var_decl, table);
                 break;
@@ -632,7 +588,9 @@ struct analyze_result analyze_var(struct var var, struct table* table) {
         }
     }
 
-    if (var_access != symbol->var_access) {
+    if (var_access != symbol->var_access &&
+        !(var_access == ACCESS_PRIMITIVE &&
+          symbol->var_access == ACCESS_CLASS)) {
         const char* msg = "";
         switch (symbol->var_access) {
             case ACCESS_PRIMITIVE:
@@ -724,5 +682,93 @@ struct analyze_result analyze_var(struct var var, struct table* table) {
         result.type = field->val.field.type;
     }
 
+    return result;
+}
+
+struct analyze_result analyze_return(struct return_cmd return_cmd,
+                                     struct table* table) {
+    struct analyze_result result;
+    result.status = SUCCESS;
+
+    result = analyze_node(return_cmd.exp, table);
+    if (result.status != SUCCESS) {
+        return result;
+    }
+
+    struct symbol* function = get_function(table);
+    if (result.type.key == function->data.function_def.type.key) {
+    } else {
+        fprintf(stderr,
+                error_msg[ERROR_MISMATCHED_TYPE_RETURN],
+                function->data.function_def.token.val.string_v,
+                function->data.function_def.token.line,
+                function->data.function_def.token.column);
+        result.status = ERROR_MISMATCHED_TYPE_RETURN;
+    }
+
+    return result;
+}
+
+struct analyze_result analyze_attr(struct attr_cmd attr_cmd,
+                                   struct table* table) {
+    struct analyze_result var = analyze_node(attr_cmd.var, table);
+    if (var.status != SUCCESS) {
+        return var;
+    }
+    struct analyze_result exp = analyze_node(attr_cmd.exp, table);
+    if (exp.status != SUCCESS) {
+        return exp;
+    }
+    struct analyze_result result = convert_type(exp.type, var.type);
+    if (result.status != SUCCESS) {
+        fprintf(stderr,
+                error_msg[result.status],
+                exp.type.key == CUSTOM ? exp.type.val.custom
+                                       : literal_type[exp.type.val.primitive],
+                var.type.key == CUSTOM ? var.type.val.custom
+                                       : literal_type[var.type.val.primitive],
+                attr_cmd.var->val.var.token.line,
+                attr_cmd.var->val.var.token.column);
+    }
+
+    return result;
+}
+
+struct analyze_result analyze_shift(struct shift_cmd shift_cmd,
+                                    struct table* table) {
+    struct analyze_result var = analyze_node(shift_cmd.var, table);
+    if (var.status != SUCCESS) {
+        return var;
+    }
+    struct analyze_result exp = analyze_node(shift_cmd.exp, table);
+    if (exp.status != SUCCESS) {
+        return exp;
+    }
+    struct analyze_result result = convert_type(exp.type, val_type[INT]);
+    if (result.status != SUCCESS) {
+        fprintf(stderr,
+                error_msg[result.status],
+                exp.type.key == CUSTOM ? exp.type.val.custom
+                                       : literal_type[exp.type.val.primitive],
+                val_type[INT].key == CUSTOM
+                    ? val_type[INT].val.custom
+                    : literal_type[val_type[INT].val.primitive],
+                shift_cmd.var->val.var.token.line,
+                shift_cmd.var->val.var.token.column);
+        return result;
+    }
+
+    result = convert_type(val_type[INT], var.type);
+    if (result.status != SUCCESS) {
+        fprintf(stderr,
+                error_msg[result.status],
+                val_type[INT].key == CUSTOM
+                    ? val_type[INT].val.custom
+                    : literal_type[val_type[INT].val.primitive],
+                var.type.key == CUSTOM ? var.type.val.custom
+                                       : literal_type[var.type.val.primitive],
+                shift_cmd.var->val.var.token.line,
+                shift_cmd.var->val.var.token.column);
+    }
     return result;
 }
