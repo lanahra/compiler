@@ -242,6 +242,7 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
                 result = analyze_node(node->val.while_cmd.cmd_block, table);
                 break;
             case N_FOR:
+                result = analyze_for(node->val.for_cmd, table);
                 break;
             case N_FOREACH:
                 break;
@@ -294,6 +295,10 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
                 result = declare_local_var(node->val.local_var_decl, table);
                 break;
             case N_CMD_LIST:
+                result = analyze_node(node->val.cmd_list.cmd_list, table);
+                if (result.status == SUCCESS) {
+                    result = analyze_node(node->val.cmd_list.cmd, table);
+                }
                 break;
             case N_CMD_BLOCK:
                 result = analyze_node(node->val.cmd_block.high_list, table);
@@ -762,13 +767,51 @@ struct analyze_result analyze_shift(struct shift_cmd shift_cmd,
     if (result.status != SUCCESS) {
         fprintf(stderr,
                 error_msg[result.status],
-                val_type[INT].key == CUSTOM
-                    ? val_type[INT].val.custom
-                    : literal_type[val_type[INT].val.primitive],
+                literal_type[INT],
                 var.type.key == CUSTOM ? var.type.val.custom
                                        : literal_type[var.type.val.primitive],
                 shift_cmd.var->val.var.token.line,
                 shift_cmd.var->val.var.token.column);
     }
+    return result;
+}
+
+struct analyze_result analyze_for(struct for_cmd for_cmd, struct table* table) {
+    struct analyze_result result;
+    result.status = SUCCESS;
+
+    result = analyze_node(for_cmd.initialization, table);
+    if (result.status != SUCCESS) {
+        return result;
+    }
+
+    struct analyze_result cond = analyze_node(for_cmd.condition, table);
+    if (result.status != SUCCESS) {
+        return cond;
+    }
+
+    result = convert_type(cond.type, val_type[BOOL]);
+    if (result.status != SUCCESS) {
+        fprintf(stderr,
+                error_msg[result.status],
+                cond.type.key == CUSTOM
+                    ? cond.type.val.custom
+                    : literal_type[cond.type.val.primitive],
+                literal_type[BOOL],
+                0,
+                0);
+        return result;
+    }
+
+    result = analyze_node(for_cmd.update, table);
+    if (result.status != SUCCESS) {
+        return result;
+    }
+
+    result = analyze_node(for_cmd.cmd_block, table);
+    if (result.status != SUCCESS) {
+        return result;
+    }
+
     return result;
 }

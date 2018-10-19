@@ -2,22 +2,22 @@
 
 enum status {
     SUCCESS = 0,
-    ERROR_UNDECLARED = 100,
-    ERROR_ALREADY_DECLARED = 101,
-    ERROR_IS_VARIABLE = 200,
-    ERROR_IS_VECTOR = 201,
-    ERROR_IS_FUNCTION = 202,
-    ERROR_IS_USER = 203,
-    ERROR_MISMATCHED_TYPE = 300,
-    ERROR_IMPLICIT_CONVERSION_STRING = 301,
-    ERROR_IMPLICIT_CONVERSION_CHAR = 302,
-    ERROR_IMPLICIT_CONVERSION_USER = 303,
-    ERROR_MISSING_ARGS = 400,
-    ERROR_TOO_MANY_ARGS = 401,
-    ERROR_MISMATCHED_TYPE_ARGS = 402,
-    ERROR_MISMATCHED_TYPE_INPUT = 500,
-    ERROR_MISMATCHED_TYPE_OUTPUT = 501,
-    ERROR_MISMATCHED_TYPE_RETURN = 502
+    ERROR_UNDECLARED = 10,
+    ERROR_ALREADY_DECLARED = 11,
+    ERROR_IS_VARIABLE = 20,
+    ERROR_IS_VECTOR = 21,
+    ERROR_IS_FUNCTION = 22,
+    ERROR_IS_USER = 23,
+    ERROR_MISMATCHED_TYPE = 30,
+    ERROR_IMPLICIT_CONVERSION_STRING = 31,
+    ERROR_IMPLICIT_CONVERSION_CHAR = 32,
+    ERROR_IMPLICIT_CONVERSION_USER = 33,
+    ERROR_MISSING_ARGS = 40,
+    ERROR_TOO_MANY_ARGS = 41,
+    ERROR_MISMATCHED_TYPE_ARGS = 42,
+    ERROR_MISMATCHED_TYPE_INPUT = 50,
+    ERROR_MISMATCHED_TYPE_OUTPUT = 51,
+    ERROR_MISMATCHED_TYPE_RETURN = 52
 };
 
 enum var_access {
@@ -76,3 +76,4 @@ struct analyze_result analyze_attr(struct attr_cmd attr_cmd,
                                    struct table* table);
 struct analyze_result analyze_shift(struct shift_cmd shift_cmd,
                                     struct table* table);
+struct analyze_result analyze_for(struct for_cmd for_cmd, struct table* table);
