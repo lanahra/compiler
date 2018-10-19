@@ -129,10 +129,10 @@ struct node* make_dot_arg() {
     return node;
 }
 
-struct node* make_arg_list(struct node* arg_list, struct node* arg) {
+struct node* make_arg_list(struct node* arg, struct node* next) {
     struct node* node = alloc_node(N_ARG_LIST);
-    node->val.arg_list.arg_list = arg_list;
     node->val.arg_list.arg = arg;
+    node->val.arg_list.next = next;
     return node;
 }
 
@@ -397,8 +397,8 @@ void free_node(struct node* node) {
                 free_node(node->val.foreach_cmd.cmd_block);
                 break;
             case N_ARG_LIST:
-                free_node(node->val.arg_list.arg_list);
                 free_node(node->val.arg_list.arg);
+                free_node(node->val.arg_list.next);
                 break;
             case N_FUNCTION:
                 free(node->val.function_cmd.token.val.string_v);
@@ -657,9 +657,9 @@ void decompile_node(struct node* node) {
                 printf(".");
                 break;
             case N_ARG_LIST:
-                decompile_node(node->val.arg_list.arg_list);
-                printf(", ");
                 decompile_node(node->val.arg_list.arg);
+                printf(", ");
+                decompile_node(node->val.arg_list.next);
                 break;
             case N_FUNCTION:
                 printf("%s(", node->val.function_cmd.token.val.string_v);

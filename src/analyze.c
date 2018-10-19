@@ -4,29 +4,32 @@
 #include "../include/analyze.h"
 #include "../include/parser.tab.h"
 
-const char* error_msg[] = {
-        [ERROR_UNDECLARED] = "Identifier not declared: %s line %d column %d\n",
-        [ERROR_ALREADY_DECLARED] =
-            "Identifier already declared: %s line %d column %d\n",
-        [ERROR_MISMATCHED_TYPE] =
-            "Mismatched types: %s and %s line %d column %d\n",
-        [ERROR_IMPLICIT_CONVERSION_STRING] =
-            "Cannot convert %s to %s line %d column %d\n",
-        [ERROR_IMPLICIT_CONVERSION_CHAR] =
-            "Cannot convert %s to %s line %d column %d\n",
-        [ERROR_IMPLICIT_CONVERSION_USER] =
-            "Cannot convert %s to %s line %d column %d\n",
-        [ERROR_IS_VARIABLE] =
-            "Identifier %s must be used as a variable line %d column %d\n",
-        [ERROR_IS_VECTOR] =
-            "Identifier %s must be used as a vector line %d column %d\n",
-        [ERROR_IS_USER] =
-            "Identifier %s must be used as a class line %d column %d\n",
-        [ERROR_IS_FUNCTION] =
-            "Identifier %s must be used as a function line %d column %d\n",
-        [ERROR_MISMATCHED_TYPE_RETURN] =
-            "Wrong return type of function %s line %d column %d\n",
-};
+const char* error_msg[] =
+    {[ERROR_UNDECLARED] = "Identifier not declared: %s line %d column %d\n",
+     [ERROR_ALREADY_DECLARED] =
+         "Identifier already declared: %s line %d column %d\n",
+     [ERROR_MISMATCHED_TYPE] =
+         "Mismatched types: %s and %s line %d column %d\n",
+     [ERROR_IMPLICIT_CONVERSION_STRING] =
+         "Cannot convert %s to %s line %d column %d\n",
+     [ERROR_IMPLICIT_CONVERSION_CHAR] =
+         "Cannot convert %s to %s line %d column %d\n",
+     [ERROR_IMPLICIT_CONVERSION_USER] =
+         "Cannot convert %s to %s line %d column %d\n",
+     [ERROR_IS_VARIABLE] =
+         "Identifier %s must be used as a variable line %d column %d\n",
+     [ERROR_IS_VECTOR] =
+         "Identifier %s must be used as a vector line %d column %d\n",
+     [ERROR_IS_USER] =
+         "Identifier %s must be used as a class line %d column %d\n",
+     [ERROR_IS_FUNCTION] =
+         "Identifier %s must be used as a function line %d column %d\n",
+     [ERROR_MISMATCHED_TYPE_RETURN] =
+         "Wrong return type of function %s line %d column %d\n",
+     [ERROR_MISSING_ARGS] =
+         "Function call %s has missing arguments line %d column %d",
+     [ERROR_TOO_MANY_ARGS] =
+         "Function call %s has too many arguments line %d column %d"};
 
 const char* literal_type[] = {[INT] = "int",
                               [FLOAT] = "string",
@@ -102,7 +105,7 @@ struct symbol* get_symbol(char* id, struct table* table) {
     return 0;
 }
 
-struct symbol* get_function(struct table* table) {
+struct symbol* get_self_function(struct table* table) {
     struct symbol* symbol = table->head;
 
     while (symbol != 0) {
@@ -189,6 +192,31 @@ struct analyze_result convert_type(struct type type, struct type target) {
     return result;
 }
 
+struct analyze_result match_access(enum var_access use,
+                                   enum var_access symbol) {
+    struct analyze_result result;
+    result.status = SUCCESS;
+    if (use != symbol && !(use == ACCESS_PRIMITIVE && symbol == ACCESS_CLASS)) {
+        switch (symbol) {
+            case ACCESS_PRIMITIVE:
+                result.status = ERROR_IS_VARIABLE;
+                break;
+            case ACCESS_CLASS:
+                result.status = ERROR_IS_USER;
+                break;
+            case ACCESS_PRIMITIVE_ARRAY:
+            case ACCESS_CLASS_ARRAY:
+                result.status = ERROR_IS_VECTOR;
+                break;
+            case ACCESS_FUNCTION:
+                result.status = ERROR_IS_FUNCTION;
+                break;
+        }
+    }
+
+    return result;
+}
+
 struct analyze_result analyze_node(struct node* node, struct table* table) {
     struct analyze_result result;
     result.status = SUCCESS;
@@ -251,6 +279,7 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
             case N_ARG_LIST:
                 break;
             case N_FUNCTION:
+                result = analyze_function(node->val.function_cmd, table);
                 break;
             case N_PIPE:
                 break;
@@ -450,6 +479,12 @@ struct analyze_result define_params(struct node* params, struct table* table) {
         symbol->data.parameter = param;
         symbol->is_new_context = false;
 
+        if (param.type.key == CUSTOM) {
+            symbol->var_access = ACCESS_CLASS;
+        } else {
+            symbol->var_access = ACCESS_PRIMITIVE;
+        }
+
         symbol->next = table->head;
         table->head = symbol;
 
@@ -593,32 +628,10 @@ struct analyze_result analyze_var(struct var var, struct table* table) {
         }
     }
 
-    if (var_access != symbol->var_access &&
-        !(var_access == ACCESS_PRIMITIVE &&
-          symbol->var_access == ACCESS_CLASS)) {
-        const char* msg = "";
-        switch (symbol->var_access) {
-            case ACCESS_PRIMITIVE:
-                msg = error_msg[ERROR_IS_VARIABLE];
-                result.status = ERROR_IS_VARIABLE;
-                break;
-            case ACCESS_CLASS:
-                msg = error_msg[ERROR_IS_USER];
-                result.status = ERROR_IS_USER;
-                break;
-            case ACCESS_PRIMITIVE_ARRAY:
-            case ACCESS_CLASS_ARRAY:
-                msg = error_msg[ERROR_IS_VECTOR];
-                result.status = ERROR_IS_VECTOR;
-                break;
-            case ACCESS_FUNCTION:
-                msg = error_msg[ERROR_IS_FUNCTION];
-                result.status = ERROR_IS_FUNCTION;
-                break;
-        }
-
+    result = match_access(var_access, symbol->var_access);
+    if (result.status != SUCCESS) {
         fprintf(stderr,
-                msg,
+                error_msg[result.status],
                 var.token.val.string_v,
                 var.token.line,
                 var.token.column);
@@ -654,6 +667,8 @@ struct analyze_result analyze_var(struct var var, struct table* table) {
             case SYMBOL_LOCAL_VAR_DECL:
                 result.type = symbol->data.local_var_decl.type;
                 break;
+            case SYMBOL_PARAM:
+                result.type = symbol->data.parameter.type;
             default:
                 break;
         }
@@ -668,6 +683,9 @@ struct analyze_result analyze_var(struct var var, struct table* table) {
             case SYMBOL_LOCAL_VAR_DECL:
                 class = get_symbol(symbol->data.local_var_decl.type.val.custom,
                                    table);
+            case SYMBOL_PARAM:
+                class =
+                    get_symbol(symbol->data.parameter.type.val.custom, table);
                 break;
             default:
                 break;
@@ -700,16 +718,21 @@ struct analyze_result analyze_return(struct return_cmd return_cmd,
         return result;
     }
 
-    struct symbol* function = get_function(table);
+    struct symbol* function = get_self_function(table);
     if (result.type.key == function->data.function_def.type.key) {
-    } else {
-        fprintf(stderr,
-                error_msg[ERROR_MISMATCHED_TYPE_RETURN],
-                function->data.function_def.token.val.string_v,
-                function->data.function_def.token.line,
-                function->data.function_def.token.column);
-        result.status = ERROR_MISMATCHED_TYPE_RETURN;
+        if (result.type.key == CUSTOM &&
+            strcmp(result.type.val.custom,
+                   function->data.function_def.type.val.custom) == 0) {
+            return result;
+        }
     }
+
+    fprintf(stderr,
+            error_msg[ERROR_MISMATCHED_TYPE_RETURN],
+            function->data.function_def.token.val.string_v,
+            function->data.function_def.token.line,
+            function->data.function_def.token.column);
+    result.status = ERROR_MISMATCHED_TYPE_RETURN;
 
     return result;
 }
@@ -794,9 +817,8 @@ struct analyze_result analyze_for(struct for_cmd for_cmd, struct table* table) {
     if (result.status != SUCCESS) {
         fprintf(stderr,
                 error_msg[result.status],
-                cond.type.key == CUSTOM
-                    ? cond.type.val.custom
-                    : literal_type[cond.type.val.primitive],
+                cond.type.key == CUSTOM ? cond.type.val.custom
+                                        : literal_type[cond.type.val.primitive],
                 literal_type[BOOL],
                 0,
                 0);
@@ -810,6 +832,77 @@ struct analyze_result analyze_for(struct for_cmd for_cmd, struct table* table) {
 
     result = analyze_node(for_cmd.cmd_block, table);
     if (result.status != SUCCESS) {
+        return result;
+    }
+
+    return result;
+}
+
+struct analyze_result analyze_function(struct function_cmd function_cmd,
+                                       struct table* table) {
+    struct analyze_result result;
+    result.status = SUCCESS;
+
+    struct symbol* function =
+        get_symbol(function_cmd.token.val.string_v, table);
+    if (function == 0) {
+        fprintf(stderr,
+                error_msg[ERROR_UNDECLARED],
+                function_cmd.token.val.string_v,
+                function_cmd.token.line,
+                function_cmd.token.column);
+        result.status = ERROR_UNDECLARED;
+    }
+
+    result = match_access(ACCESS_FUNCTION, function->var_access);
+    if (result.status != SUCCESS) {
+        fprintf(stderr,
+                error_msg[result.status],
+                function_cmd.token.val.string_v,
+                function_cmd.token.line,
+                function_cmd.token.column);
+        return result;
+    }
+
+    struct node* params_list = function->data.function_def.params;
+    struct node* arg_list = function_cmd.arg_list;
+    struct parameter parameter;
+
+    while (params_list != 0) {
+        parameter = params_list->val.parameter;
+
+        if (arg_list == 0) {
+            fprintf(stderr,
+                    error_msg[ERROR_MISSING_ARGS],
+                    function_cmd.token.val.string_v,
+                    function_cmd.token.line,
+                    function_cmd.token.column);
+            result.status = ERROR_MISSING_ARGS;
+            return result;
+        }
+
+        struct analyze_result arg_result =
+            analyze_node(arg_list->val.arg_list.arg, table);
+        if (arg_result.status != SUCCESS) {
+            return result;
+        }
+
+        result = convert_type(arg_result.type, parameter.type);
+        if (result.status != SUCCESS) {
+            return result;
+        }
+
+        params_list = params_list->val.parameter.next;
+        arg_list = arg_list->val.arg_list.next;
+    }
+
+    if (arg_list != 0) {
+        fprintf(stderr,
+                error_msg[ERROR_TOO_MANY_ARGS],
+                function_cmd.token.val.string_v,
+                function_cmd.token.line,
+                function_cmd.token.column);
+        result.status = ERROR_TOO_MANY_ARGS;
         return result;
     }
 

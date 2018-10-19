@@ -77,3 +77,5 @@ struct analyze_result analyze_attr(struct attr_cmd attr_cmd,
 struct analyze_result analyze_shift(struct shift_cmd shift_cmd,
                                     struct table* table);
 struct analyze_result analyze_for(struct for_cmd for_cmd, struct table* table);
+struct analyze_result analyze_function(struct function_cmd function_cmd,
+                                       struct table* table);

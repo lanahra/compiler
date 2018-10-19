@@ -399,8 +399,8 @@ pipe
 
 argument_list
     : %empty { $$ = 0; }
-    | argument
-    | argument_list ',' argument { $$ = make_arg_list($1, $3); }
+    | argument { $$ = make_arg_list($1, 0); }
+    | argument ',' argument_list { $$ = make_arg_list($1, $3); }
     ;
 
 argument

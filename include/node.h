@@ -107,8 +107,8 @@ struct foreach_cmd {
 };
 
 struct arg_list {
-    struct node* arg_list;
     struct node* arg;
+    struct node* next;
 };
 
 struct function_cmd {
@@ -292,7 +292,7 @@ struct node* make_foreach_cmd(char* item,
                               struct node* exp_list,
                               struct node* cmd_block);
 struct node* make_dot_arg();
-struct node* make_arg_list(struct node* arg_list, struct node* arg);
+struct node* make_arg_list(struct node* arg, struct node* next);
 struct node* make_function_cmd(struct token token, struct node* arg_list);
 struct node* make_pipe_cmd(struct node* pipe_cmd,
                            int pipe_op,
