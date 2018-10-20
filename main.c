@@ -16,11 +16,8 @@ int main(int argc, char** argv) {
         exit(status);
     }
 
-    decompile_node(node);
-
     struct table* table = alloc_table();
     struct analyze_result result = analyze_node(node, table);
-    printf("%d\n", result.status);
 
     free_table(table);
     free_node(node);

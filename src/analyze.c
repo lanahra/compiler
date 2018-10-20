@@ -280,7 +280,6 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
     result.status = SUCCESS;
 
     if (node != 0) {
-        printf("%s\n", type_name[node->type]);
         switch (node->type) {
             case N_LITERAL:
                 result.type.key = PRIMITIVE;
@@ -453,7 +452,6 @@ struct analyze_result define_class(struct class_def class_def,
                                    struct table* table) {
     struct analyze_result result;
     result.status = SUCCESS;
-    printf("define class: %s\n", class_def.token.val.string_v);
     if (is_declared(class_def.token.val.string_v, table)) {
         fprintf(stderr,
                 error_msg[ERROR_ALREADY_DECLARED],
@@ -480,7 +478,6 @@ struct analyze_result declare_global_var(struct global_var_decl global_var,
                                          struct table* table) {
     struct analyze_result result;
     result.status = SUCCESS;
-    printf("declare global var: %s\n", global_var.token.val.string_v);
     if (is_declared(global_var.token.val.string_v, table)) {
         fprintf(stderr,
                 error_msg[ERROR_ALREADY_DECLARED],
@@ -533,7 +530,6 @@ struct analyze_result define_params(struct node* params, struct table* table) {
     result.status = SUCCESS;
     if (params != 0) {
         struct parameter param = params->val.parameter;
-        printf("define param %s\n", param.token.val.string_v);
         if (is_declared(param.token.val.string_v, table)) {
             fprintf(stderr,
                     error_msg[ERROR_ALREADY_DECLARED],
@@ -580,7 +576,6 @@ struct analyze_result define_function(struct function_def function_def,
                                       struct table* table) {
     struct analyze_result result;
     result.status = SUCCESS;
-    printf("define function: %s\n", function_def.token.val.string_v);
     if (is_declared(function_def.token.val.string_v, table)) {
         fprintf(stderr,
                 error_msg[ERROR_ALREADY_DECLARED],
@@ -619,7 +614,6 @@ struct analyze_result declare_local_var(struct local_var_decl local_var,
                                         struct table* table) {
     struct analyze_result result;
     result.status = SUCCESS;
-    printf("declare local var: %s\n", local_var.token.val.string_v);
     if (is_declared(local_var.token.val.string_v, table)) {
         fprintf(stderr,
                 error_msg[ERROR_ALREADY_DECLARED],
