@@ -270,6 +270,7 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
                 result = analyze_binary(node->val.binary_exp, table);
                 break;
             case N_TERNARY_EXP:
+                result = analyze_ternary(node->val.ternary_exp, table);
                 break;
             case N_EXP_LIST:
                 break;
@@ -918,15 +919,17 @@ struct analyze_result analyze_function(struct function_cmd function_cmd,
             return result;
         }
 
-        struct analyze_result arg_result =
-            analyze_node(arg_list->val.arg_list.arg, table);
-        if (arg_result.status != SUCCESS) {
-            return result;
-        }
+        if (arg_list->val.arg_list.arg->type != N_DOT_ARG) {
+            struct analyze_result arg_result =
+                analyze_node(arg_list->val.arg_list.arg, table);
+            if (arg_result.status != SUCCESS) {
+                return result;
+            }
 
-        result = convert_type(arg_result.type, parameter.type);
-        if (result.status != SUCCESS) {
-            return result;
+            result = convert_type(arg_result.type, parameter.type);
+            if (result.status != SUCCESS) {
+                return result;
+            }
         }
 
         params_list = params_list->val.parameter.next;
@@ -975,5 +978,59 @@ struct analyze_result analyze_binary(struct binary_exp binary_exp,
                 0);
     }
 
+    return result;
+}
+
+struct analyze_result analyze_ternary(struct ternary_exp ternary_exp,
+                                      struct table* table) {
+    struct analyze_result result;
+    result.status = SUCCESS;
+
+    result = analyze_node(ternary_exp.condition, table);
+    if (result.status != SUCCESS) {
+        return result;
+    }
+
+    result = convert_type(result.type, val_type[BOOL]);
+    if (result.status != SUCCESS) {
+        fprintf(stderr,
+                error_msg[result.status],
+                result.type.key == CUSTOM
+                    ? result.type.val.custom
+                    : literal_type[result.type.val.primitive],
+                literal_type[BOOL],
+                0,
+                0);
+        return result;
+    }
+
+    struct analyze_result exp = analyze_node(ternary_exp.exp1, table);
+    if (exp.status != SUCCESS) {
+        return exp;
+    }
+
+    result = analyze_node(ternary_exp.exp2, table);
+    if (result.status != SUCCESS) {
+        return result;
+    }
+
+    if (exp.type.key == result.type.key) {
+        if (exp.type.key == CUSTOM &&
+            strcmp(exp.type.val.custom, result.type.val.custom) == 0) {
+            return result;
+        } else if (exp.type.key == PRIMITIVE &&
+                   exp.type.val.primitive == result.type.val.primitive) {
+            return result;
+        }
+    }
+
+    fprintf(stderr,
+            error_msg[ERROR_MISMATCHED_TYPE],
+            result.type.key == CUSTOM ? result.type.val.custom
+                                      : literal_type[result.type.val.primitive],
+            result.type.key == CUSTOM ? result.type.val.custom
+                                      : literal_type[result.type.val.primitive],
+            0,
+            0);
     return result;
 }
