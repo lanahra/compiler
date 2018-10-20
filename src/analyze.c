@@ -31,7 +31,10 @@ const char* error_msg[] =
      [ERROR_TOO_MANY_ARGS] =
          "Function call %s has too many arguments line %d column %d",
      [ERROR_MISMATCHED_TYPE_INPUT] = "Wrong type for input command\n",
-     [ERROR_MISMATCHED_TYPE_OUTPUT] = "Wrong type for output command\n"};
+     [ERROR_MISMATCHED_TYPE_OUTPUT] = "Wrong type for output command\n",
+     [ERROR_MISMATCHED_TYPE_ARGS] =
+         "Wrong argument type %s for parameter type %s on function %s line %d "
+         "column %d"};
 
 const char* literal_type[] = {[INT] = "int",
                               [FLOAT] = "string",
@@ -63,6 +66,24 @@ void free_symbol(struct symbol* symbol) {
 void free_table(struct table* table) {
     free_symbol(table->head);
     free(table);
+}
+
+void pop_context(struct table* table) {
+    struct symbol* symbol = table->head;
+    struct symbol* temp;
+
+    while (symbol != 0) {
+        if (symbol->is_new_context) {
+            symbol->is_new_context = false;
+            break;
+        }
+
+        temp = symbol->next;
+        free(symbol);
+        symbol = temp;
+    }
+
+    table->head = symbol;
 }
 
 bool is_declared(char* id, struct table* table) {
@@ -275,6 +296,11 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
                 result = analyze_ternary(node->val.ternary_exp, table);
                 break;
             case N_EXP_LIST:
+                result = analyze_node(node->val.exp_list.exp, table);
+                if (result.status != SUCCESS) {
+                    return result;
+                }
+                result = analyze_node(node->val.exp_list.exp_list, table);
                 break;
             case N_SWITCH:
                 result = analyze_node(node->val.switch_cmd.control_exp, table);
@@ -313,6 +339,11 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
                 result = analyze_for(node->val.for_cmd, table);
                 break;
             case N_FOREACH:
+                result = analyze_node(node->val.foreach_cmd.exp_list, table);
+                if (result.status != SUCCESS) {
+                    return result;
+                }
+                result = analyze_node(node->val.foreach_cmd.cmd_block, table);
                 break;
             case N_DOT_ARG:
                 break;
@@ -322,6 +353,11 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
                 result = analyze_function(node->val.function_cmd, table);
                 break;
             case N_PIPE:
+                result = analyze_node(node->val.pipe_cmd.pipe_cmd, table);
+                if (result.status != SUCCESS) {
+                    return result;
+                }
+                result = analyze_node(node->val.pipe_cmd.function_cmd, table);
                 break;
             case N_IF:
                 result = analyze_node(node->val.if_cmd.condition, table);
@@ -384,10 +420,14 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
                 break;
             case N_FUNCTION_DEF:
                 result = define_function(node->val.function_def, table);
-                if (result.status == SUCCESS) {
-                    result =
-                        analyze_node(node->val.function_def.cmd_block, table);
+                if (result.status != SUCCESS) {
+                    return result;
                 }
+                result = analyze_node(node->val.function_def.cmd_block, table);
+                if (result.status != SUCCESS) {
+                    return result;
+                }
+                pop_context(table);
                 break;
             case N_FIELD:
                 break;
@@ -932,6 +972,18 @@ struct analyze_result analyze_function(struct function_cmd function_cmd,
 
             result = convert_type(arg_result.type, parameter.type);
             if (result.status != SUCCESS) {
+                fprintf(stderr,
+                        error_msg[ERROR_MISMATCHED_TYPE_ARGS],
+                        arg_result.type.key == CUSTOM
+                            ? arg_result.type.val.custom
+                            : literal_type[arg_result.type.val.primitive],
+                        parameter.type.key == CUSTOM
+                            ? parameter.type.val.custom
+                            : literal_type[parameter.type.val.primitive],
+                        function_cmd.token.val.string_v,
+                        function_cmd.token.line,
+                        function_cmd.token.column);
+                result.status = ERROR_MISMATCHED_TYPE_ARGS;
                 return result;
             }
         }

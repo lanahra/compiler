@@ -59,6 +59,7 @@ struct table {
 
 struct table* alloc_table();
 void free_table(struct table* table);
+void pop_context(struct table* table);
 
 struct analyze_result analyze_node(struct node* node, struct table* table);
 struct analyze_result define_class(struct class_def class_def,
