@@ -74,10 +74,10 @@ struct node* make_ternary_exp(struct node* condition,
     return node;
 }
 
-struct node* make_exp_list(struct node* exp_list, struct node* exp) {
+struct node* make_exp_list(struct node* exp, struct node* exp_list) {
     struct node* node = alloc_node(N_EXP_LIST);
-    node->val.exp_list.exp_list = exp_list;
     node->val.exp_list.exp = exp;
+    node->val.exp_list.exp_list = exp_list;
     return node;
 }
 
@@ -370,8 +370,8 @@ void free_node(struct node* node) {
                 free_node(node->val.ternary_exp.exp2);
                 break;
             case N_EXP_LIST:
-                free_node(node->val.exp_list.exp_list);
                 free_node(node->val.exp_list.exp);
+                free_node(node->val.exp_list.exp_list);
                 break;
             case N_SWITCH:
                 free_node(node->val.switch_cmd.control_exp);
@@ -598,9 +598,9 @@ void decompile_node(struct node* node) {
                 decompile_node(node->val.ternary_exp.exp2);
                 break;
             case N_EXP_LIST:
-                decompile_node(node->val.exp_list.exp_list);
-                printf(", ");
                 decompile_node(node->val.exp_list.exp);
+                printf(", ");
+                decompile_node(node->val.exp_list.exp_list);
                 break;
             case N_SWITCH:
                 printf("switch (");

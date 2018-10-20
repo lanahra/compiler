@@ -30,7 +30,8 @@ const char* error_msg[] =
          "Function call %s has missing arguments line %d column %d",
      [ERROR_TOO_MANY_ARGS] =
          "Function call %s has too many arguments line %d column %d",
-     [ERROR_MISMATCHED_TYPE_INPUT] = "Wrong type for input command\n"};
+     [ERROR_MISMATCHED_TYPE_INPUT] = "Wrong type for input command\n",
+     [ERROR_MISMATCHED_TYPE_OUTPUT] = "Wrong type for output command\n"};
 
 const char* literal_type[] = {[INT] = "int",
                               [FLOAT] = "string",
@@ -338,6 +339,7 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
                 result = analyze_node(node->val.if_cmd.else_cmd_block, table);
                 break;
             case N_OUTPUT:
+                result = analyze_output(node->val.out_cmd, table);
                 break;
             case N_INPUT:
                 result = analyze_input(node->val.in_cmd, table);
@@ -1046,6 +1048,38 @@ struct analyze_result analyze_input(struct in_cmd in_cmd, struct table* table) {
         result.status = ERROR_MISMATCHED_TYPE_INPUT;
     } else {
         result = analyze_var(in_cmd.exp->val.var, table);
+    }
+
+    return result;
+}
+
+struct analyze_result analyze_output(struct out_cmd out_cmd,
+                                     struct table* table) {
+    struct analyze_result result;
+    result.status = SUCCESS;
+
+    struct node* exp_list = out_cmd.exp_list;
+
+    while (exp_list != 0) {
+        if (exp_list->val.exp_list.exp->type == N_LITERAL &&
+            exp_list->val.exp_list.exp->val.token.type == STRING) {
+            exp_list = exp_list->val.exp_list.exp_list;
+            continue;
+        } else {
+            result = analyze_node(exp_list->val.exp_list.exp, table);
+            if (result.status != SUCCESS) {
+                return result;
+            }
+
+            result = convert_type(result.type, val_type[INT]);
+            if (result.status != SUCCESS) {
+                fprintf(stderr, "%s", error_msg[ERROR_MISMATCHED_TYPE_OUTPUT]);
+                result.status = ERROR_MISMATCHED_TYPE_OUTPUT;
+                return result;
+            }
+        }
+
+        exp_list = exp_list->val.exp_list.exp_list;
     }
 
     return result;

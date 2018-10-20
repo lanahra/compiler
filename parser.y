@@ -431,8 +431,8 @@ switch
     ;
 
 expression_list
-    : expression
-    | expression_list ',' expression { $$ = make_exp_list($1, $3); }
+    : expression { $$ = make_exp_list($1, 0); }
+    | expression ',' expression_list { $$ = make_exp_list($1, $3); }
     ;
 
 expression

@@ -280,7 +280,7 @@ struct node* make_binary_exp(struct node* left, int op, struct node* right);
 struct node* make_ternary_exp(struct node* condition,
                               struct node* exp1,
                               struct node* exp2);
-struct node* make_exp_list(struct node* exp_list, struct node* exp);
+struct node* make_exp_list(struct node* exp, struct node* exp_list);
 struct node* make_switch_cmd(struct node* control_exp, struct node* cmd_block);
 struct node* make_do_while_cmd(struct node* cmd_block, struct node* condition);
 struct node* make_while_cmd(struct node* condition, struct node* cmd_block);
