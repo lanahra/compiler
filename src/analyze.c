@@ -29,7 +29,8 @@ const char* error_msg[] =
      [ERROR_MISSING_ARGS] =
          "Function call %s has missing arguments line %d column %d",
      [ERROR_TOO_MANY_ARGS] =
-         "Function call %s has too many arguments line %d column %d"};
+         "Function call %s has too many arguments line %d column %d",
+     [ERROR_MISMATCHED_TYPE_INPUT] = "Wrong type for input command\n"};
 
 const char* literal_type[] = {[INT] = "int",
                               [FLOAT] = "string",
@@ -339,6 +340,7 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
             case N_OUTPUT:
                 break;
             case N_INPUT:
+                result = analyze_input(node->val.in_cmd, table);
                 break;
             case N_CASE:
                 break;
@@ -1032,5 +1034,19 @@ struct analyze_result analyze_ternary(struct ternary_exp ternary_exp,
                                       : literal_type[result.type.val.primitive],
             0,
             0);
+    return result;
+}
+
+struct analyze_result analyze_input(struct in_cmd in_cmd, struct table* table) {
+    struct analyze_result result;
+    result.status = SUCCESS;
+
+    if (in_cmd.exp->type != N_VAR) {
+        fprintf(stderr, "%s", error_msg[ERROR_MISMATCHED_TYPE_INPUT]);
+        result.status = ERROR_MISMATCHED_TYPE_INPUT;
+    } else {
+        result = analyze_var(in_cmd.exp->val.var, table);
+    }
+
     return result;
 }

@@ -83,3 +83,4 @@ struct analyze_result analyze_binary(struct binary_exp binary_exp,
                                      struct table* table);
 struct analyze_result analyze_ternary(struct ternary_exp ternary_exp,
                                       struct table* table);
+struct analyze_result analyze_input(struct in_cmd in_cmd, struct table* table);
