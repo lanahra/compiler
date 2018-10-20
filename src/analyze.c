@@ -192,6 +192,41 @@ struct analyze_result convert_type(struct type type, struct type target) {
     return result;
 }
 
+struct analyze_result infer_type(struct type left, struct type right) {
+    struct analyze_result result;
+    result.status = SUCCESS;
+
+    if (left.key != right.key) {
+        result.status = ERROR_MISMATCHED_TYPE;
+        return result;
+    }
+
+    if (left.key == CUSTOM) {
+        if (strcmp(left.val.custom, right.val.custom) != 0) {
+            result.status = ERROR_MISMATCHED_TYPE;
+        } else {
+            result.type = left;
+        }
+    } else {
+        if (left.val.primitive == right.val.primitive) {
+            result.type = left;
+        } else if (left.val.primitive == CHAR || left.val.primitive == STRING ||
+                   right.val.primitive == CHAR ||
+                   right.val.primitive == STRING) {
+            result.status = ERROR_MISMATCHED_TYPE;
+        } else if (left.val.primitive == FLOAT ||
+                   right.val.primitive == FLOAT) {
+            result.type = val_type[FLOAT];
+        } else if (left.val.primitive == INT || right.val.primitive == INT) {
+            result.type = val_type[INT];
+        } else {
+            result.status = ERROR_MISMATCHED_TYPE;
+        }
+    }
+
+    return result;
+}
+
 struct analyze_result match_access(enum var_access use,
                                    enum var_access symbol) {
     struct analyze_result result;
@@ -229,8 +264,10 @@ struct analyze_result analyze_node(struct node* node, struct table* table) {
                 result.type.val.primitive = node->val.token.type;
                 break;
             case N_UNARY_EXP:
+                result = analyze_node(node->val.unary_exp.operand, table);
                 break;
             case N_BINARY_EXP:
+                result = analyze_binary(node->val.binary_exp, table);
                 break;
             case N_TERNARY_EXP:
                 break;
@@ -904,6 +941,38 @@ struct analyze_result analyze_function(struct function_cmd function_cmd,
                 function_cmd.token.column);
         result.status = ERROR_TOO_MANY_ARGS;
         return result;
+    }
+
+    result.type = function->data.function_def.type;
+    return result;
+}
+
+struct analyze_result analyze_binary(struct binary_exp binary_exp,
+                                     struct table* table) {
+    struct analyze_result result;
+    result.status = SUCCESS;
+
+    struct analyze_result left = analyze_node(binary_exp.left, table);
+    if (left.status != SUCCESS) {
+        return left;
+    }
+
+    struct analyze_result right = analyze_node(binary_exp.right, table);
+    if (right.status != SUCCESS) {
+        return right;
+    }
+
+    result = infer_type(left.type, right.type);
+    if (result.status != SUCCESS) {
+        fprintf(stderr,
+                error_msg[ERROR_MISMATCHED_TYPE],
+                left.type.key == CUSTOM ? left.type.val.custom
+                                        : literal_type[left.type.val.primitive],
+                right.type.key == CUSTOM
+                    ? right.type.val.custom
+                    : literal_type[right.type.val.primitive],
+                0,
+                0);
     }
 
     return result;
