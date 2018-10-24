@@ -27,14 +27,14 @@ const char* error_msg[] =
      [ERROR_MISMATCHED_TYPE_RETURN] =
          "Wrong return type of function %s line %d column %d\n",
      [ERROR_MISSING_ARGS] =
-         "Function call %s has missing arguments line %d column %d",
+         "Function call %s has missing arguments line %d column %d\n",
      [ERROR_TOO_MANY_ARGS] =
-         "Function call %s has too many arguments line %d column %d",
+         "Function call %s has too many arguments line %d column %d\n",
      [ERROR_MISMATCHED_TYPE_INPUT] = "Wrong type for input command\n",
      [ERROR_MISMATCHED_TYPE_OUTPUT] = "Wrong type for output command\n",
      [ERROR_MISMATCHED_TYPE_ARGS] =
          "Wrong argument type %s for parameter type %s on function %s line %d "
-         "column %d"};
+         "column %d\n"};
 
 const char* literal_type[] = {[INT] = "int",
                               [FLOAT] = "string",
@@ -92,6 +92,10 @@ bool is_declared(char* id, struct table* table) {
     while (symbol != 0) {
         if (strcmp(id, symbol->id) == 0) {
             return true;
+        }
+
+        if (symbol->is_new_context == true) {
+            return false;
         }
 
         symbol = symbol->next;
@@ -166,7 +170,7 @@ struct analyze_result convert_type(struct type type, struct type target) {
             result.status = ERROR_IMPLICIT_CONVERSION_USER;
             return result;
         }
-    } else if (type.key == CUSTOM || target.key == CUSTOM) {
+    } else if (type.key == CUSTOM) {
         result.status = ERROR_IMPLICIT_CONVERSION_USER;
         return result;
     } else if (type.val.primitive == target.val.primitive) {
@@ -201,12 +205,12 @@ struct analyze_result convert_type(struct type type, struct type target) {
             return result;
     }
 
-    if (target.val.primitive == CHAR) {
+    if (type.val.primitive == CHAR) {
         result.status = ERROR_IMPLICIT_CONVERSION_CHAR;
         return result;
     }
 
-    if (target.val.primitive == STRING) {
+    if (type.val.primitive == STRING) {
         result.status = ERROR_IMPLICIT_CONVERSION_STRING;
         return result;
     }
@@ -220,23 +224,24 @@ struct analyze_result infer_type(struct type left, struct type right) {
     result.status = SUCCESS;
 
     if (left.key != right.key) {
-        result.status = ERROR_MISMATCHED_TYPE;
+        result.status = ERROR_IMPLICIT_CONVERSION_USER;
         return result;
     }
 
     if (left.key == CUSTOM) {
         if (strcmp(left.val.custom, right.val.custom) != 0) {
-            result.status = ERROR_MISMATCHED_TYPE;
+            result.status = ERROR_IMPLICIT_CONVERSION_USER;
         } else {
             result.type = left;
         }
     } else {
         if (left.val.primitive == right.val.primitive) {
             result.type = left;
-        } else if (left.val.primitive == CHAR || left.val.primitive == STRING ||
-                   right.val.primitive == CHAR ||
+        } else if (left.val.primitive == STRING ||
                    right.val.primitive == STRING) {
-            result.status = ERROR_MISMATCHED_TYPE;
+            result.status = ERROR_IMPLICIT_CONVERSION_STRING;
+        } else if (left.val.primitive == CHAR || right.val.primitive == CHAR) {
+            result.status = ERROR_IMPLICIT_CONVERSION_CHAR;
         } else if (left.val.primitive == FLOAT ||
                    right.val.primitive == FLOAT) {
             result.type = val_type[FLOAT];
@@ -800,6 +805,12 @@ struct analyze_result analyze_return(struct return_cmd return_cmd,
             strcmp(result.type.val.custom,
                    function->data.function_def.type.val.custom) == 0) {
             return result;
+        } else {
+            result =
+                convert_type(result.type, function->data.function_def.type);
+            if (result.status == SUCCESS) {
+                return result;
+            }
         }
     }
 
@@ -928,6 +939,7 @@ struct analyze_result analyze_function(struct function_cmd function_cmd,
                 function_cmd.token.line,
                 function_cmd.token.column);
         result.status = ERROR_UNDECLARED;
+        return result;
     }
 
     result = match_access(ACCESS_FUNCTION, function->var_access);
