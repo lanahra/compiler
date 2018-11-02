@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "include/analyze.h"
+#include "include/generate.h"
 #include "include/lex.yy.h"
 #include "include/parser.tab.h"
 
@@ -18,6 +19,8 @@ int main(int argc, char** argv) {
 
     struct table* table = alloc_table();
     struct analyze_result result = analyze_node(node, table);
+
+    generate_code(node);
 
     free_table(table);
     free_node(node);

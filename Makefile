@@ -9,10 +9,10 @@ TEST_LD_FLAGS = -L/usr/local/lib -lfl -lgtest -lpthread
 TESTS := $(wildcard $(TEST_DIR)/*.cpp)
 TEST_OBJ := $(TESTS:$(TEST_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-SOURCES := $(addprefix $(SOURCE_DIR)/, node.c analyze.c lex.yy.c parser.tab.c)
+SOURCES := $(addprefix $(SOURCE_DIR)/, node.c analyze.c generate.c lex.yy.c parser.tab.c)
 OBJECTS := $(SOURCES:$(SOURCE_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-TARGET = etapa4
+TARGET = etapa5
 
 .PHONY: all test yy dir clean
 
@@ -40,4 +40,4 @@ dir:
 	mkdir -p obj
 
 clean:
-	rm -fr etapa4 run_test */lex.yy.* */parser.tab.* obj
+	rm -fr etapa5 run_test */lex.yy.* */parser.tab.* obj
