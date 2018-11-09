@@ -9,6 +9,8 @@ static int local_offset = 0;
 static int register_offset = 0;
 static int label_offset = 0;
 
+struct code code;
+
 const char* instruction[] = {[STORE_AI] = "storeAI %s => %s, %d\n",
                              [LOAD_I] = "loadI %d => %s\n",
                              [LOAD_AI] = "loadAI %s, %d => %s\n",
@@ -46,8 +48,15 @@ void free_offset_table(struct offset_table* table) {
 
 void generate_code(struct node* node) {
     struct offset_table* table = alloc_offset_table();
+    code.head = 0;
+    code.last = 0;
     generate(node, table, 0, 0);
-    printf("halt\n");
+    char* line = alloc_line();
+    sprintf(line, "halt\n");
+    append_ins(line);
+
+    print_code();
+    free_code(code.head);
 
     free_offset_table(table);
 }
@@ -159,7 +168,9 @@ void generate_local_var(struct local_var_decl local_var,
 
     if (local_var.init != 0) {
         char* reg = get_reg(register_offset - 1);
-        printf(instruction[STORE_AI], reg, "rfp", var->offset);
+        char* line = alloc_line();
+        sprintf(line, instruction[STORE_AI], reg, "rfp", var->offset);
+        append_ins(line);
         free(reg);
     }
 }
@@ -170,11 +181,13 @@ void generate_attribution(struct attr_cmd attr, struct offset_table* table) {
 
     char* reg = get_reg(register_offset - 1);
 
+    char* line = alloc_line();
     if (var->scope == GLOBAL) {
-        printf(instruction[STORE_AI], reg, "rbss", var->offset);
+        sprintf(line, instruction[STORE_AI], reg, "rbss", var->offset);
     } else {
-        printf(instruction[STORE_AI], reg, "rfp", var->offset);
+        sprintf(line, instruction[STORE_AI], reg, "rfp", var->offset);
     }
+    append_ins(line);
 
     free(reg);
 }
@@ -184,7 +197,9 @@ void generate_literal(struct token literal) {
     char* reg = get_reg(register_offset);
     register_offset += 1;
 
-    printf(instruction[LOAD_I], val, reg);
+    char* line = alloc_line();
+    sprintf(line, instruction[LOAD_I], val, reg);
+    append_ins(line);
     free(reg);
 }
 
@@ -193,11 +208,13 @@ void generate_var(struct var var, struct offset_table* table) {
     char* reg = get_reg(register_offset);
     register_offset += 1;
 
+    char* line = alloc_line();
     if (addr->scope == GLOBAL) {
-        printf(instruction[LOAD_AI], "rbss", addr->offset, reg);
+        sprintf(line, instruction[LOAD_AI], "rbss", addr->offset, reg);
     } else {
-        printf(instruction[LOAD_AI], "rfp", addr->offset, reg);
+        sprintf(line, instruction[LOAD_AI], "rfp", addr->offset, reg);
     }
+    append_ins(line);
 
     free(reg);
 }
@@ -209,13 +226,17 @@ void generate_binary(struct binary_exp binary_exp,
     if (binary_exp.op == AND_OP) {
         char* l_and = get_label();
         generate(binary_exp.left, table, l_and, l_false);
-        printf(instruction[LABEL], l_and);
+        char* line = alloc_line();
+        sprintf(line, instruction[LABEL], l_and);
+        append_ins(line);
         generate(binary_exp.right, table, l_true, l_false);
         free(l_and);
     } else if (binary_exp.op == OR_OP) {
         char* l_or = get_label();
         generate(binary_exp.left, table, l_true, l_or);
-        printf(instruction[LABEL], l_or);
+        char* line = alloc_line();
+        sprintf(line, instruction[LABEL], l_or);
+        append_ins(line);
         generate(binary_exp.right, table, l_true, l_false);
         free(l_or);
     } else {
@@ -226,42 +247,66 @@ void generate_binary(struct binary_exp binary_exp,
 
         char* reg3 = get_reg(register_offset);
         register_offset += 1;
+
+        char* line = alloc_line();
         switch (binary_exp.op) {
             case '+':
-                printf(instruction[ADD], reg1, reg2, reg3);
+                sprintf(line, instruction[ADD], reg1, reg2, reg3);
+                append_ins(line);
                 break;
             case '-':
-                printf(instruction[SUB], reg1, reg2, reg3);
+                sprintf(line, instruction[SUB], reg1, reg2, reg3);
+                append_ins(line);
                 break;
             case '*':
-                printf(instruction[MULT], reg1, reg2, reg3);
+                sprintf(line, instruction[MULT], reg1, reg2, reg3);
+                append_ins(line);
                 break;
             case '/':
-                printf(instruction[DIV], reg1, reg2, reg3);
+                sprintf(line, instruction[DIV], reg1, reg2, reg3);
+                append_ins(line);
                 break;
             case '<':
-                printf(instruction[CMP_LT], reg1, reg2, reg3);
-                printf(instruction[CBR], reg3, l_true, l_false);
+                sprintf(line, instruction[CMP_LT], reg1, reg2, reg3);
+                append_ins(line);
+                line = alloc_line();
+                sprintf(line, instruction[CBR], reg3, l_true, l_false);
+                append_ins(line);
                 break;
             case '>':
-                printf(instruction[CMP_GT], reg1, reg2, reg3);
-                printf(instruction[CBR], reg3, l_true, l_false);
+                sprintf(line, instruction[CMP_GT], reg1, reg2, reg3);
+                append_ins(line);
+                line = alloc_line();
+                sprintf(line, instruction[CBR], reg3, l_true, l_false);
+                append_ins(line);
                 break;
             case LE_OP:
-                printf(instruction[CMP_LE], reg1, reg2, reg3);
-                printf(instruction[CBR], reg3, l_true, l_false);
+                sprintf(line, instruction[CMP_LE], reg1, reg2, reg3);
+                append_ins(line);
+                line = alloc_line();
+                sprintf(line, instruction[CBR], reg3, l_true, l_false);
+                append_ins(line);
                 break;
             case GE_OP:
-                printf(instruction[CMP_GE], reg1, reg2, reg3);
-                printf(instruction[CBR], reg3, l_true, l_false);
+                sprintf(line, instruction[CMP_GE], reg1, reg2, reg3);
+                append_ins(line);
+                line = alloc_line();
+                sprintf(line, instruction[CBR], reg3, l_true, l_false);
+                append_ins(line);
                 break;
             case EQ_OP:
-                printf(instruction[CMP_EQ], reg1, reg2, reg3);
-                printf(instruction[CBR], reg3, l_true, l_false);
+                sprintf(line, instruction[CMP_EQ], reg1, reg2, reg3);
+                append_ins(line);
+                line = alloc_line();
+                sprintf(line, instruction[CBR], reg3, l_true, l_false);
+                append_ins(line);
                 break;
             case NE_OP:
-                printf(instruction[CMP_NE], reg1, reg2, reg3);
-                printf(instruction[CBR], reg3, l_true, l_false);
+                sprintf(line, instruction[CMP_NE], reg1, reg2, reg3);
+                append_ins(line);
+                line = alloc_line();
+                sprintf(line, instruction[CBR], reg3, l_true, l_false);
+                append_ins(line);
                 break;
             default:
                 break;
@@ -279,12 +324,20 @@ void generate_if(struct if_cmd if_cmd, struct offset_table* table) {
     char* l_done = get_label();
 
     generate(if_cmd.condition, table, l_true, l_false);
-    printf(instruction[LABEL], l_true);
+    char* line = alloc_line();
+    sprintf(line, instruction[LABEL], l_true);
+    append_ins(line);
     generate(if_cmd.then_cmd_block, table, 0, 0);
-    printf(instruction[JUMP_I], l_done);
-    printf(instruction[LABEL], l_false);
+    line = alloc_line();
+    sprintf(line, instruction[JUMP_I], l_done);
+    append_ins(line);
+    line = alloc_line();
+    sprintf(line, instruction[LABEL], l_false);
+    append_ins(line);
     generate(if_cmd.else_cmd_block, table, 0, 0);
-    printf(instruction[LABEL], l_done);
+    line = alloc_line();
+    sprintf(line, instruction[LABEL], l_done);
+    append_ins(line);
 
     free(l_true);
     free(l_false);
@@ -296,12 +349,20 @@ void generate_while(struct while_cmd while_cmd, struct offset_table* table) {
     char* l_false = get_label();
     char* l_begin = get_label();
 
-    printf(instruction[LABEL], l_begin);
+    char* line = alloc_line();
+    sprintf(line, instruction[LABEL], l_begin);
+    append_ins(line);
     generate(while_cmd.condition, table, l_true, l_false);
-    printf(instruction[LABEL], l_true);
+    line = alloc_line();
+    sprintf(line, instruction[LABEL], l_true);
+    append_ins(line);
     generate(while_cmd.cmd_block, table, 0, 0);
-    printf(instruction[JUMP_I], l_begin);
-    printf(instruction[LABEL], l_false);
+    line = alloc_line();
+    sprintf(line, instruction[JUMP_I], l_begin);
+    append_ins(line);
+    line = alloc_line();
+    sprintf(line, instruction[LABEL], l_false);
+    append_ins(line);
 
     free(l_true);
     free(l_false);
@@ -313,11 +374,52 @@ void generate_do_while(struct do_while_cmd do_while_cmd,
     char* l_true = get_label();
     char* l_false = get_label();
 
-    printf(instruction[LABEL], l_true);
+    char* line = alloc_line();
+    sprintf(line, instruction[LABEL], l_true);
+    append_ins(line);
     generate(do_while_cmd.cmd_block, table, 0, 0);
     generate(do_while_cmd.condition, table, l_true, l_false);
-    printf(instruction[LABEL], l_false);
+    line = alloc_line();
+    sprintf(line, instruction[LABEL], l_false);
+    append_ins(line);
 
     free(l_true);
     free(l_false);
+}
+
+char* alloc_line() {
+    char* line = malloc(64 * sizeof *line);
+    return line;
+}
+
+void append_ins(char* line) {
+    struct ins* ins = malloc(sizeof *ins);
+    ins->line = line;
+    ins->next = 0;
+
+    if (code.head == 0) {
+        code.head = ins;
+        code.last = ins;
+    } else {
+        code.last->next = ins;
+        code.last = ins;
+    }
+}
+
+void free_code(struct ins* head) {
+    if (head != 0) {
+        free(head->line);
+        free_code(head->next);
+    }
+
+    free(head);
+}
+
+void print_code() {
+    struct ins* ins = code.head;
+
+    while (ins != 0) {
+        printf("%s", ins->line);
+        ins = ins->next;
+    }
 }

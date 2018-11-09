@@ -55,3 +55,18 @@ void generate_if(struct if_cmd if_cmd, struct offset_table* table);
 void generate_while(struct while_cmd while_cmd, struct offset_table* table);
 void generate_do_while(struct do_while_cmd do_while_cmd,
                        struct offset_table* table);
+
+struct ins {
+    char* line;
+    struct ins* next;
+};
+
+struct code {
+    struct ins* head;
+    struct ins* last;
+};
+
+char* alloc_line();
+void append_ins(char* line);
+void free_code(struct ins* head);
+void print_code();
