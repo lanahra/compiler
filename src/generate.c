@@ -8,6 +8,7 @@ static int global_offset = 0;
 static int local_offset = 0;
 static int register_offset = 0;
 static int label_offset = 0;
+static int ins = 0;
 
 struct code code;
 
@@ -26,7 +27,11 @@ const char* instruction[] = {[STORE_AI] = "storeAI %s => %s, %d\n",
                              [CMP_NE] = "cmp_NE %s, %s -> %s\n",
                              [CBR] = "cbr %s -> %s, %s\n",
                              [JUMP_I] = "jumpI -> %s\n",
-                             [LABEL] = "%s:\n"};
+                             [JUMP] = "jump -> %s\n",
+                             [LABEL] = "%s:\n",
+                             [FLABEL] = "l%s:\n",
+                             [I2I] = "i2i %s => %s\n",
+                             [ADD_I] = "addI %s, %d => %s\n"};
 
 struct offset_table* alloc_offset_table() {
     struct offset_table* table = malloc(sizeof *table);
@@ -50,10 +55,28 @@ void generate_code(struct node* node) {
     struct offset_table* table = alloc_offset_table();
     code.head = 0;
     code.last = 0;
-    generate(node, table, 0, 0);
+
     char* line = alloc_line();
-    sprintf(line, "halt\n");
+    sprintf(line, instruction[LOAD_I], 1024, "rfp");
     append_ins(line);
+    ins++;
+
+    line = alloc_line();
+    sprintf(line, instruction[LOAD_I], 1024, "rsp");
+    append_ins(line);
+    ins++;
+
+    line = alloc_line();
+    sprintf(line, instruction[LOAD_I], 0, "rbss");
+    append_ins(line);
+    ins++;
+
+    line = alloc_line();
+    sprintf(line, instruction[JUMP_I], "lmain");
+    append_ins(line);
+    ins++;
+
+    generate(node, table, 0, 0);
 
     print_code();
     free_code(code.head);
@@ -93,6 +116,12 @@ void generate(struct node* node,
                 generate(node->val.local_var_decl.init, table, 0, 0);
                 generate_local_var(node->val.local_var_decl, table);
                 break;
+            case N_RETURN:
+                generate_return(node->val.return_cmd, table);
+                break;
+            case N_FUNCTION:
+                generate_function(node->val.function_cmd, table);
+                break;
             case N_CMD_BLOCK:
                 generate(node->val.cmd_block.high_list, table, 0, 0);
                 break;
@@ -101,7 +130,7 @@ void generate(struct node* node,
                 generate(node->val.high_list.cmd, table, 0, 0);
                 break;
             case N_FUNCTION_DEF:
-                generate(node->val.function_def.cmd_block, table, 0, 0);
+                generate_function_def(node->val.function_def, table);
                 break;
             case N_GLOBAL_VAR_DECL:
                 generate_global_var(node->val.global_var_decl, table);
@@ -143,6 +172,12 @@ char* get_label() {
     return label;
 }
 
+char* get_flabel(char* name) {
+    char* label = malloc(64 * sizeof *label);
+    snprintf(label, 64 * sizeof *label, "l%s", name);
+    return label;
+}
+
 void generate_global_var(struct global_var_decl global_var,
                          struct offset_table* table) {
     struct address* var = malloc(sizeof *var);
@@ -171,6 +206,7 @@ void generate_local_var(struct local_var_decl local_var,
         char* line = alloc_line();
         sprintf(line, instruction[STORE_AI], reg, "rfp", var->offset);
         append_ins(line);
+        ins++;
         free(reg);
     }
 }
@@ -188,6 +224,7 @@ void generate_attribution(struct attr_cmd attr, struct offset_table* table) {
         sprintf(line, instruction[STORE_AI], reg, "rfp", var->offset);
     }
     append_ins(line);
+    ins++;
 
     free(reg);
 }
@@ -200,6 +237,7 @@ void generate_literal(struct token literal) {
     char* line = alloc_line();
     sprintf(line, instruction[LOAD_I], val, reg);
     append_ins(line);
+    ins++;
     free(reg);
 }
 
@@ -215,6 +253,7 @@ void generate_var(struct var var, struct offset_table* table) {
         sprintf(line, instruction[LOAD_AI], "rfp", addr->offset, reg);
     }
     append_ins(line);
+    ins++;
 
     free(reg);
 }
@@ -253,60 +292,76 @@ void generate_binary(struct binary_exp binary_exp,
             case '+':
                 sprintf(line, instruction[ADD], reg1, reg2, reg3);
                 append_ins(line);
+                ins++;
                 break;
             case '-':
                 sprintf(line, instruction[SUB], reg1, reg2, reg3);
                 append_ins(line);
+                ins++;
                 break;
             case '*':
                 sprintf(line, instruction[MULT], reg1, reg2, reg3);
                 append_ins(line);
+                ins++;
                 break;
             case '/':
                 sprintf(line, instruction[DIV], reg1, reg2, reg3);
                 append_ins(line);
+                ins++;
                 break;
             case '<':
                 sprintf(line, instruction[CMP_LT], reg1, reg2, reg3);
                 append_ins(line);
+                ins++;
                 line = alloc_line();
                 sprintf(line, instruction[CBR], reg3, l_true, l_false);
                 append_ins(line);
+                ins++;
                 break;
             case '>':
                 sprintf(line, instruction[CMP_GT], reg1, reg2, reg3);
                 append_ins(line);
+                ins++;
                 line = alloc_line();
                 sprintf(line, instruction[CBR], reg3, l_true, l_false);
                 append_ins(line);
+                ins++;
                 break;
             case LE_OP:
                 sprintf(line, instruction[CMP_LE], reg1, reg2, reg3);
                 append_ins(line);
+                ins++;
                 line = alloc_line();
                 sprintf(line, instruction[CBR], reg3, l_true, l_false);
                 append_ins(line);
+                ins++;
                 break;
             case GE_OP:
                 sprintf(line, instruction[CMP_GE], reg1, reg2, reg3);
                 append_ins(line);
+                ins++;
                 line = alloc_line();
                 sprintf(line, instruction[CBR], reg3, l_true, l_false);
                 append_ins(line);
+                ins++;
                 break;
             case EQ_OP:
                 sprintf(line, instruction[CMP_EQ], reg1, reg2, reg3);
                 append_ins(line);
+                ins++;
                 line = alloc_line();
                 sprintf(line, instruction[CBR], reg3, l_true, l_false);
                 append_ins(line);
+                ins++;
                 break;
             case NE_OP:
                 sprintf(line, instruction[CMP_NE], reg1, reg2, reg3);
                 append_ins(line);
+                ins++;
                 line = alloc_line();
                 sprintf(line, instruction[CBR], reg3, l_true, l_false);
                 append_ins(line);
+                ins++;
                 break;
             default:
                 break;
@@ -331,6 +386,7 @@ void generate_if(struct if_cmd if_cmd, struct offset_table* table) {
     line = alloc_line();
     sprintf(line, instruction[JUMP_I], l_done);
     append_ins(line);
+    ins++;
     line = alloc_line();
     sprintf(line, instruction[LABEL], l_false);
     append_ins(line);
@@ -360,6 +416,7 @@ void generate_while(struct while_cmd while_cmd, struct offset_table* table) {
     line = alloc_line();
     sprintf(line, instruction[JUMP_I], l_begin);
     append_ins(line);
+    ins++;
     line = alloc_line();
     sprintf(line, instruction[LABEL], l_false);
     append_ins(line);
@@ -385,6 +442,205 @@ void generate_do_while(struct do_while_cmd do_while_cmd,
 
     free(l_true);
     free(l_false);
+}
+
+void generate_function_def(struct function_def function_def,
+                           struct offset_table* table) {
+    char* line = alloc_line();
+    sprintf(line, instruction[FLABEL], function_def.token.val.string_v);
+    append_ins(line);
+
+    bool is_main = strcmp(function_def.token.val.string_v, "main") == 0;
+
+    if (!is_main) {
+        line = alloc_line();
+        sprintf(line, instruction[STORE_AI], "rsp", "rsp", 4);
+        append_ins(line);
+        ins++;
+
+        line = alloc_line();
+        sprintf(line, instruction[STORE_AI], "rfp", "rsp", 8);
+        append_ins(line);
+        ins++;
+
+        line = alloc_line();
+        sprintf(line, instruction[I2I], "rsp", "rfp");
+        append_ins(line);
+        ins++;
+
+        local_offset = 16;
+    } else {
+        local_offset = 0;
+    }
+
+    char* addI = alloc_line();
+    append_ins(addI);
+    ins++;
+
+    struct node* param = function_def.params;
+    struct address* var = 0;
+    while (param != 0) {
+        var = malloc(sizeof *var);
+        var->id = param->val.parameter.token.val.string_v;
+        var->scope = LOCAL;
+        var->offset = local_offset;
+        local_offset += 4;
+
+        var->next = table->head;
+        table->head = var;
+
+        param = param->val.parameter.next;
+    }
+
+    register_offset = 0;
+    generate(function_def.cmd_block, table, 0, 0);
+
+    sprintf(addI, instruction[ADD_I], "rsp", local_offset, "rsp");
+
+    if (!is_main) {
+        char *reg = get_reg(register_offset);
+        register_offset++;
+
+        line = alloc_line();
+        sprintf(line, instruction[LOAD_AI], "rfp", 0, reg);
+        append_ins(line);
+        ins++;
+
+        line = alloc_line();
+        sprintf(line, instruction[LOAD_AI], "rfp", 4, "rsp");
+        append_ins(line);
+        ins++;
+
+        line = alloc_line();
+        sprintf(line, instruction[LOAD_AI], "rfp", 8, "rfp");
+        append_ins(line);
+        ins++;
+
+        line = alloc_line();
+        sprintf(line, instruction[JUMP], reg);
+        append_ins(line);
+        ins++;
+
+        free(reg);
+    } else {
+        line = alloc_line();
+        sprintf(line, "halt\n");
+        append_ins(line);
+        ins++;
+    }
+}
+
+void generate_return(struct return_cmd return_cmd, struct offset_table* table) {
+    generate(return_cmd.exp, table, 0, 0);
+
+    char* reg = get_reg(register_offset - 1);
+
+    char* line = alloc_line();
+    sprintf(line, instruction[STORE_AI], reg, "rfp", 12);
+    append_ins(line);
+    ins++;
+
+    free(reg);
+
+    reg = get_reg(register_offset);
+    register_offset++;
+
+    line = alloc_line();
+    sprintf(line, instruction[LOAD_AI], "rfp", 0, reg);
+    append_ins(line);
+    ins++;
+
+    line = alloc_line();
+    sprintf(line, instruction[LOAD_AI], "rfp", 4, "rsp");
+    append_ins(line);
+    ins++;
+
+    line = alloc_line();
+    sprintf(line, instruction[LOAD_AI], "rfp", 8, "rfp");
+    append_ins(line);
+    ins++;
+
+    line = alloc_line();
+    sprintf(line, instruction[JUMP], reg);
+    append_ins(line);
+    ins++;
+
+    free(reg);
+}
+
+void generate_function(struct function_cmd function_cmd,
+                       struct offset_table* table) {
+
+    struct node* arg = function_cmd.arg_list;
+    char* reg;
+    char* line;
+    int param_offset = 16;
+    while (arg != 0) {
+        generate(arg->val.arg_list.arg, table, 0, 0);
+
+        reg = get_reg(register_offset - 1);
+
+        line = alloc_line();
+        sprintf(line, instruction[STORE_AI], reg, "rsp", param_offset);
+        append_ins(line);
+        ins++;
+
+        param_offset += 4;
+        arg = arg->val.arg_list.next;
+
+        free(reg);
+    }
+
+    char* rsp = alloc_line();
+    append_ins(rsp);
+    ins++;
+
+    char* ins_reg = get_reg(register_offset);
+    register_offset++;
+    line = alloc_line();
+    sprintf(line, instruction[STORE_AI], ins_reg, "rsp", 0);
+    append_ins(line);
+    ins++;
+
+    int mem_offset = local_offset;
+    int i;
+    for (i = 0; i < register_offset; i++) {
+        reg = get_reg(i);
+        line = alloc_line();
+        sprintf(line, instruction[STORE_AI], reg, "rfp", local_offset);
+        append_ins(line);
+        ins++;
+        local_offset += 4;
+        free(reg);
+    }
+
+    char* flabel = get_flabel(function_cmd.token.val.string_v);
+    line = alloc_line();
+    sprintf(line, instruction[JUMP_I], flabel);
+    append_ins(line);
+    ins++;
+    free(flabel);
+
+    sprintf(rsp, instruction[LOAD_I], ins, ins_reg);
+    free(ins_reg);
+
+    for (i = 0; i < register_offset; i++) {
+        reg = get_reg(i);
+        line = alloc_line();
+        sprintf(line, instruction[LOAD_AI], "rfp", mem_offset, reg);
+        append_ins(line);
+        ins++;
+        mem_offset += 4;
+        free(reg);
+    }
+
+    reg = get_reg(register_offset);
+    register_offset += 1;
+    line = alloc_line();
+    sprintf(line, instruction[LOAD_AI], "rsp", 12, reg);
+    append_ins(line);
+    ins++;
+    free(reg);
 }
 
 char* alloc_line() {

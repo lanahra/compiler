@@ -16,7 +16,11 @@ enum instruction_constant {
     CMP_NE,
     CBR,
     JUMP_I,
-    LABEL
+    LABEL,
+    FLABEL,
+    I2I,
+    ADD_I,
+    JUMP
 };
 
 enum scope { GLOBAL, LOCAL };
@@ -54,6 +58,11 @@ void generate_binary(struct binary_exp binary_exp,
 void generate_if(struct if_cmd if_cmd, struct offset_table* table);
 void generate_while(struct while_cmd while_cmd, struct offset_table* table);
 void generate_do_while(struct do_while_cmd do_while_cmd,
+                       struct offset_table* table);
+void generate_function_def(struct function_def function_def,
+                           struct offset_table* table);
+void generate_return(struct return_cmd return_cmd, struct offset_table* table);
+void generate_function(struct function_cmd function_cmd,
                        struct offset_table* table);
 
 struct ins {

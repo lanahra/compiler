@@ -12,7 +12,7 @@ TEST_OBJ := $(TESTS:$(TEST_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 SOURCES := $(addprefix $(SOURCE_DIR)/, node.c analyze.c generate.c lex.yy.c parser.tab.c)
 OBJECTS := $(SOURCES:$(SOURCE_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-TARGET = etapa5
+TARGET = etapa6
 
 .PHONY: all test yy dir clean
 
@@ -40,4 +40,4 @@ dir:
 	mkdir -p obj
 
 clean:
-	rm -fr etapa5 run_test */lex.yy.* */parser.tab.* obj
+	rm -fr etapa6 run_test */lex.yy.* */parser.tab.* obj
